@@ -1,0 +1,14 @@
+# Default variable values for AKS cluster deployment
+# These values can be overridden when running terraform
+
+workload_name = "demo-workload"
+project_name = "azure-ai-agent"
+owner = "devops-team"
+environment = "dev"
+location = "East US"
+node_count = 3
+vm_size = "Standard_DS2_v2"
+enable_autoscaling = true
+enable_rbac = true
+network_policy = "azure"
+kubernetes_version = "1.28"
