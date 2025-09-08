@@ -113,7 +113,7 @@ public class GitHubTemplateService
                 new TemplateParameter { Name = "enable_autoscaling", Type = "bool", Description = "Enable autoscaling", Required = false, Default = "true" },
                 new TemplateParameter { Name = "enable_rbac", Type = "bool", Description = "Enable RBAC", Required = false, Default = "true" },
                 new TemplateParameter { Name = "network_policy", Type = "string", Description = "Network policy to use (azure, calico, or none)", Required = false, Default = "azure" },
-                new TemplateParameter { Name = "kubernetes_version", Type = "string", Description = "Kubernetes version", Required = false, Default = "1.28" }
+                new TemplateParameter { Name = "kubernetes_version", Type = "string", Description = "Kubernetes version", Required = false, Default = "1.31.10" }
             }
         },
         ["webapp-basic"] = new TemplateMetadata
@@ -164,10 +164,90 @@ public class GitHubTemplateService
                 new TemplateParameter { Name = "sku_name", Type = "string", Description = "Database SKU", Required = true, Default = "S0" },
                 new TemplateParameter { Name = "location", Type = "string", Description = "Azure region", Required = true, Default = "East US" }
             }
+        },
+        ["keyvault-standard"] = new TemplateMetadata
+        {
+            Id = "keyvault-standard",
+            Name = "Azure Key Vault",
+            Description = "Azure Key Vault with RBAC, access policies, and monitoring",
+            Category = "security",
+            GitHubUrl = "https://raw.githubusercontent.com/sachink-singh/aiagent-terraform-template/main/terraform-templates/keyvault/main.tf",
+            Parameters = new[]
+            {
+                new TemplateParameter { Name = "keyvault_name", Type = "string", Description = "Key Vault name (must be globally unique)", Required = true },
+                new TemplateParameter { Name = "resource_group_name", Type = "string", Description = "Resource group name", Required = true },
+                new TemplateParameter { Name = "location", Type = "string", Description = "Azure region", Required = true, Default = "East US" },
+                new TemplateParameter { Name = "sku_name", Type = "string", Description = "Key Vault SKU (standard/premium)", Required = false, Default = "standard" },
+                new TemplateParameter { Name = "enable_rbac_authorization", Type = "bool", Description = "Enable RBAC authorization", Required = false, Default = "true" },
+                new TemplateParameter { Name = "enabled_for_disk_encryption", Type = "bool", Description = "Enable for disk encryption", Required = false, Default = "true" },
+                new TemplateParameter { Name = "enabled_for_deployment", Type = "bool", Description = "Enable for VM deployment", Required = false, Default = "true" },
+                new TemplateParameter { Name = "enabled_for_template_deployment", Type = "bool", Description = "Enable for template deployment", Required = false, Default = "true" },
+                new TemplateParameter { Name = "soft_delete_retention_days", Type = "number", Description = "Soft delete retention days", Required = false, Default = "7" },
+                new TemplateParameter { Name = "purge_protection_enabled", Type = "bool", Description = "Enable purge protection", Required = false, Default = "false" },
+                new TemplateParameter { Name = "network_acls_default_action", Type = "string", Description = "Network ACLs default action (Allow/Deny)", Required = false, Default = "Allow" },
+                new TemplateParameter { Name = "environment", Type = "string", Description = "Environment tag (dev/test/prod)", Required = true },
+                new TemplateParameter { Name = "project_name", Type = "string", Description = "Project name for tagging", Required = true },
+                new TemplateParameter { Name = "owner", Type = "string", Description = "Owner tag", Required = true }
+            }
+        },
+        ["keyvault-enterprise"] = new TemplateMetadata
+        {
+            Id = "keyvault-enterprise",
+            Name = "Enterprise Key Vault",
+            Description = "Enterprise Key Vault with private endpoints, advanced security, and compliance",
+            Category = "security", 
+            GitHubUrl = "https://raw.githubusercontent.com/sachink-singh/aiagent-terraform-template/main/terraform-templates/keyvault-enterprise/main.tf",
+            Parameters = new[]
+            {
+                new TemplateParameter { Name = "keyvault_name", Type = "string", Description = "Key Vault name (must be globally unique)", Required = true },
+                new TemplateParameter { Name = "resource_group_name", Type = "string", Description = "Resource group name", Required = true },
+                new TemplateParameter { Name = "location", Type = "string", Description = "Azure region", Required = true, Default = "East US" },
+                new TemplateParameter { Name = "sku_name", Type = "string", Description = "Key Vault SKU (standard/premium)", Required = false, Default = "premium" },
+                new TemplateParameter { Name = "enable_private_endpoint", Type = "bool", Description = "Enable private endpoint", Required = false, Default = "true" },
+                new TemplateParameter { Name = "subnet_id", Type = "string", Description = "Subnet ID for private endpoint", Required = false },
+                new TemplateParameter { Name = "enable_diagnostic_settings", Type = "bool", Description = "Enable diagnostic settings", Required = false, Default = "true" },
+                new TemplateParameter { Name = "log_analytics_workspace_id", Type = "string", Description = "Log Analytics workspace ID", Required = false },
+                new TemplateParameter { Name = "environment", Type = "string", Description = "Environment tag (dev/test/prod)", Required = true },
+                new TemplateParameter { Name = "business_unit", Type = "string", Description = "Business unit for cost allocation", Required = true },
+                new TemplateParameter { Name = "compliance_framework", Type = "string", Description = "Compliance framework (SOC2/HIPAA/PCI)", Required = false }
+            }
         }
     };
 
-    public List<TemplateMetadata> GetAvailableTemplates() => _templates.Values.ToList();
+    public List<TemplateMetadata> GetAvailableTemplates() 
+    {
+        // For backwards compatibility, return hardcoded templates
+        // In production, you'd call DiscoverAllTemplatesAsync() periodically
+        return _templates.Values.ToList();
+    }
+
+    /// <summary>
+    /// Gets all available templates using auto-discovery
+    /// Use this method for dynamic template loading
+    /// </summary>
+    public async Task<List<TemplateMetadata>> GetAvailableTemplatesAsync()
+    {
+        try
+        {
+            // Try auto-discovery first
+            var discoveredTemplates = await DiscoverAllTemplatesAsync();
+            
+            if (discoveredTemplates.Any())
+            {
+                _logger.LogInformation("Auto-discovered {Count} templates from repository", discoveredTemplates.Count);
+                return discoveredTemplates;
+            }
+            
+            // Fallback to hardcoded templates
+            _logger.LogInformation("Using hardcoded template definitions as fallback");
+            return _templates.Values.ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during template discovery, using hardcoded templates");
+            return _templates.Values.ToList();
+        }
+    }
 
     /// <summary>
     /// Builds a GitHub raw content URL for your organization's repository
@@ -178,60 +258,247 @@ public class GitHubTemplateService
     }
 
     /// <summary>
-    /// Discovers and loads templates from your organization's repository structure
-    /// Call this method to auto-discover templates from your repo
+    /// Enhanced auto-discovery that scans the entire repository structure
+    /// This eliminates the need to manually add templates to code
     /// </summary>
-    public async Task<List<TemplateMetadata>> DiscoverOrganizationTemplatesAsync()
+    public async Task<List<TemplateMetadata>> DiscoverAllTemplatesAsync()
     {
         var discoveredTemplates = new List<TemplateMetadata>();
         
         try
         {
-            // Common paths where templates might be stored in enterprise repos
-            var templatePaths = new[]
-            {
-                "compute/vm-standard/main.tf",
-                "compute/vm-secure/main.tf", 
-                "containers/aks-enterprise/main.tf",
-                "containers/aks-dev/main.tf",
-                "web/webapp-secure/main.tf",
-                "web/webapp-standard/main.tf",
-                "storage/storage-secure/main.tf",
-                "database/sql-enterprise/main.tf",
-                "networking/vnet-hub-spoke/main.tf",
-                "security/keyvault-enterprise/main.tf"
-            };
+            // Get repository contents via GitHub API
+            var repoContentsUrl = $"https://api.github.com/repos/{_repositoryOwner}/{_repositoryName}/contents/terraform-templates";
+            var response = await _httpClient.GetAsync(repoContentsUrl);
             
-            foreach (var path in templatePaths)
+            if (response.IsSuccessStatusCode)
             {
-                var url = BuildOrganizationTemplateUrl(path);
-                var response = await _httpClient.GetAsync(url);
+                var contentJson = await response.Content.ReadAsStringAsync();
+                var contents = JsonSerializer.Deserialize<GitHubContent[]>(contentJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 
-                if (response.IsSuccessStatusCode)
+                if (contents != null)
                 {
-                    var templateId = Path.GetDirectoryName(path)?.Replace("/", "-") ?? "unknown";
-                    var category = path.Split('/')[0];
-                    
-                    discoveredTemplates.Add(new TemplateMetadata
+                    foreach (var category in contents.Where(c => c.Type == "dir"))
                     {
-                        Id = templateId,
-                        Name = $"Organization {System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(templateId.Replace("-", " "))}",
-                        Description = $"Enterprise template from {path}",
-                        Category = category,
-                        GitHubUrl = url,
-                        Parameters = ExtractParametersFromTemplate(await response.Content.ReadAsStringAsync())
-                    });
-                    
-                    _logger.LogInformation("Discovered template: {TemplateId} at {Path}", templateId, path);
+                        await DiscoverTemplatesInCategory(category.Name, discoveredTemplates);
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: Use known paths if API fails
+                await DiscoverKnownTemplates(discoveredTemplates);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during auto-discovery, falling back to known templates");
+            await DiscoverKnownTemplates(discoveredTemplates);
+        }
+        
+        return discoveredTemplates;
+    }
+
+    private async Task DiscoverTemplatesInCategory(string category, List<TemplateMetadata> discoveredTemplates)
+    {
+        try
+        {
+            var categoryUrl = $"https://api.github.com/repos/{_repositoryOwner}/{_repositoryName}/contents/terraform-templates/{category}";
+            var response = await _httpClient.GetAsync(categoryUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var contentJson = await response.Content.ReadAsStringAsync();
+                var templates = JsonSerializer.Deserialize<GitHubContent[]>(contentJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                if (templates != null)
+                {
+                    foreach (var template in templates.Where(t => t.Type == "dir"))
+                    {
+                        await ProcessTemplateDirectory(category, template.Name, discoveredTemplates);
+                    }
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error discovering organization templates");
+            _logger.LogError(ex, "Error discovering templates in category: {Category}", category);
+        }
+    }
+
+    private async Task ProcessTemplateDirectory(string category, string templateName, List<TemplateMetadata> discoveredTemplates)
+    {
+        try
+        {
+            var templatePath = $"terraform-templates/{category}/{templateName}";
+            var mainTfUrl = $"{_rawContentUrl}/{_repositoryOwner}/{_repositoryName}/{_branch}/{templatePath}/main.tf";
+            var variablesTfUrl = $"{_rawContentUrl}/{_repositoryOwner}/{_repositoryName}/{_branch}/{templatePath}/variables.tf";
+            
+            // Check if main.tf exists
+            var mainTfResponse = await _httpClient.GetAsync(mainTfUrl);
+            if (mainTfResponse.IsSuccessStatusCode)
+            {
+                var mainTfContent = await mainTfResponse.Content.ReadAsStringAsync();
+                
+                // Try to get variables.tf for parameter extraction
+                var parameters = new List<TemplateParameter>();
+                var variablesResponse = await _httpClient.GetAsync(variablesTfUrl);
+                if (variablesResponse.IsSuccessStatusCode)
+                {
+                    var variablesContent = await variablesResponse.Content.ReadAsStringAsync();
+                    parameters = ExtractParametersFromVariablesFile(variablesContent);
+                }
+                else
+                {
+                    // Fallback to extracting from main.tf
+                    parameters = ExtractParametersFromTemplate(mainTfContent).ToList();
+                }
+
+                var templateId = $"{category}-{templateName}";
+                
+                discoveredTemplates.Add(new TemplateMetadata
+                {
+                    Id = templateId,
+                    Name = FormatTemplateName(templateName),
+                    Description = ExtractDescriptionFromTemplate(mainTfContent, templateName),
+                    Category = category,
+                    GitHubUrl = mainTfUrl,
+                    Parameters = parameters.ToArray()
+                });
+                
+                _logger.LogInformation("Discovered template: {TemplateId} at {Path}", templateId, templatePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing template directory: {Category}/{Template}", category, templateName);
+        }
+    }
+
+    private async Task DiscoverKnownTemplates(List<TemplateMetadata> discoveredTemplates)
+    {
+        // Fallback to scanning known directory structure
+        var knownPaths = new[]
+        {
+            "terraform-templates/compute/vm-standard",
+            "terraform-templates/compute/vm-secure",
+            "terraform-templates/storage/storage-account",
+            "terraform-templates/storage/storage-secure",
+            "terraform-templates/database/sql-database",
+            "terraform-templates/database/cosmosdb",
+            "terraform-templates/networking/vnet-standard",
+            "terraform-templates/networking/load-balancer",
+            "terraform-templates/security/keyvault",
+            "terraform-templates/security/keyvault-enterprise",
+            "terraform-templates/containers/aks-cluster",
+            "terraform-templates/containers/container-registry",
+            "terraform-templates/web/webapp-basic",
+            "terraform-templates/web/webapp-secure"
+        };
+
+        foreach (var path in knownPaths)
+        {
+            var mainTfUrl = $"{_rawContentUrl}/{_repositoryOwner}/{_repositoryName}/{_branch}/{path}/main.tf";
+            var response = await _httpClient.GetAsync(mainTfUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var pathParts = path.Split('/');
+                var category = pathParts[1];
+                var templateName = pathParts[2];
+                var templateId = $"{category}-{templateName}";
+                
+                var content = await response.Content.ReadAsStringAsync();
+                
+                discoveredTemplates.Add(new TemplateMetadata
+                {
+                    Id = templateId,
+                    Name = FormatTemplateName(templateName),
+                    Description = ExtractDescriptionFromTemplate(content, templateName),
+                    Category = category,
+                    GitHubUrl = mainTfUrl,
+                    Parameters = ExtractParametersFromTemplate(content)
+                });
+                
+                _logger.LogInformation("Discovered known template: {TemplateId}", templateId);
+            }
+        }
+    }
+
+    private List<TemplateParameter> ExtractParametersFromVariablesFile(string variablesContent)
+    {
+        var parameters = new List<TemplateParameter>();
+        
+        // Simple regex-based extraction from variables.tf
+        // You could enhance this with proper HCL parsing
+        var variablePattern = @"variable\s+""([^""]+)""\s*\{([^}]+)\}";
+        var matches = System.Text.RegularExpressions.Regex.Matches(variablesContent, variablePattern, System.Text.RegularExpressions.RegexOptions.Singleline);
+        
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var variableName = match.Groups[1].Value;
+            var variableBlock = match.Groups[2].Value;
+            
+            // Extract description
+            var descriptionMatch = System.Text.RegularExpressions.Regex.Match(variableBlock, @"description\s*=\s*""([^""]+)""");
+            var description = descriptionMatch.Success ? descriptionMatch.Groups[1].Value : $"Parameter for {variableName}";
+            
+            // Extract type
+            var typeMatch = System.Text.RegularExpressions.Regex.Match(variableBlock, @"type\s*=\s*(\w+)");
+            var type = typeMatch.Success ? typeMatch.Groups[1].Value : "string";
+            
+            // Extract default
+            var defaultMatch = System.Text.RegularExpressions.Regex.Match(variableBlock, @"default\s*=\s*""?([^""\n]+)""?");
+            var defaultValue = defaultMatch.Success ? defaultMatch.Groups[1].Value.Trim('"') : null;
+            
+            // Check if required (no default value typically means required)
+            var required = !defaultMatch.Success;
+            
+            parameters.Add(new TemplateParameter
+            {
+                Name = variableName,
+                Type = type,
+                Description = description,
+                Required = required,
+                Default = defaultValue
+            });
         }
         
-        return discoveredTemplates;
+        return parameters;
+    }
+
+    private string FormatTemplateName(string templateName)
+    {
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
+            templateName.Replace("-", " ").Replace("_", " ")
+        );
+    }
+
+    private string ExtractDescriptionFromTemplate(string templateContent, string templateName)
+    {
+        // Try to extract description from comments
+        var lines = templateContent.Split('\n');
+        var descriptionLines = lines.Where(l => l.TrimStart().StartsWith("# ") && 
+                                              !l.Contains("terraform") && 
+                                              !l.Contains("resource") &&
+                                              l.Length > 10)
+                                    .Take(2)
+                                    .Select(l => l.TrimStart().Substring(2).Trim());
+        
+        if (descriptionLines.Any())
+        {
+            return string.Join(" ", descriptionLines);
+        }
+        
+        return $"Auto-discovered {FormatTemplateName(templateName)} template";
+    }
+
+    // GitHub API response model
+    private class GitHubContent
+    {
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string Url { get; set; } = "";
     }
 
     private TemplateParameter[] ExtractParametersFromTemplate(string templateContent)
@@ -412,6 +679,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 }
 
@@ -419,43 +690,32 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "main" {
-  name     = "rg-${var.environment}-${var.cluster_name}"
-  location = var.location
+# Variables with defaults
+variable "workload_name" {
+  description = "Name of the workload"
+  type        = string
 }
 
-resource "azurerm_kubernetes_cluster" "main" {
-  name                = "aks-${var.environment}-${var.cluster_name}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = "aks-${var.environment}-${var.cluster_name}"
-
-  default_node_pool {
-    name       = "default"
-    node_count = var.node_count
-    vm_size    = var.node_size
-  }
-
-  identity {
-    type = "SystemAssigned"
-  }
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
 }
 
 variable "cluster_name" {
-  description = "AKS cluster name"
+  description = "Optional cluster name override"
+  type        = string
+  default     = ""
+}
+
+variable "owner" {
+  description = "Owner of the resources"
   type        = string
 }
 
-variable "node_count" {
-  description = "Initial node count"
-  type        = number
-  default     = 3
-}
-
-variable "node_size" {
-  description = "Node VM size"
+variable "environment" {
+  description = "Environment (dev, test, staging, prod)"
   type        = string
-  default     = "Standard_D2s_v3"
+  default     = "dev"
 }
 
 variable "location" {
@@ -464,15 +724,255 @@ variable "location" {
   default     = "East US"
 }
 
-variable "environment" {
-  description = "Environment"
+variable "node_count" {
+  description = "Number of nodes in the default node pool"
+  type        = number
+  default     = 3
+}
+
+variable "vm_size" {
+  description = "Size of the Virtual Machine"
   type        = string
-  default     = "dev"
+  default     = "Standard_DS2_v2"
+}
+
+# Random suffix for unique naming
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
+# Intelligent naming logic with conditional truncation only when needed
+locals {
+  # Clean input names (remove special characters, keep alphanumeric)
+  clean_workload = replace(lower(var.workload_name), "/[^a-z0-9]/", "")
+  clean_project = replace(lower(var.project_name), "/[^a-z0-9]/", "")
+  clean_owner = replace(lower(var.owner), "/[^a-z0-9]/", "")
+  clean_env = lower(var.environment)
+  clean_location = lower(substr(var.location, 0, 12))  # Keep more location context
+  
+  # 8-character suffix for uniqueness
+  suffix = random_id.suffix.hex
+  
+  # Calculate potential resource group name first
+  potential_rg_name = "rg-${local.clean_workload}-${local.clean_env}-${local.clean_location}-${local.suffix}"
+  
+  # Calculate potential cluster name
+  potential_cluster_name = var.cluster_name != "" ? var.cluster_name : "aks-${local.clean_workload}-${local.clean_env}-${local.suffix}"
+  
+  # Calculate what the node resource group would be
+  potential_node_rg = "MC_${local.potential_rg_name}_${local.potential_cluster_name}_${var.location}"
+  potential_node_rg_length = length(local.potential_node_rg)
+  
+  # Only truncate if node RG would exceed 80 characters
+  needs_truncation = local.potential_node_rg_length > 80
+  
+  # Conditional truncation - only when needed
+  workload_part = local.needs_truncation ? substr(local.clean_workload, 0, 8) : local.clean_workload
+  env_part = local.needs_truncation ? substr(local.clean_env, 0, 3) : local.clean_env
+  location_part = local.needs_truncation ? substr(local.clean_location, 0, 6) : local.clean_location
+  
+  # Final resource names - preserve meaning when possible
+  rg_name = local.needs_truncation ? "rg-${local.workload_part}-${local.location_part}-${local.suffix}" : local.potential_rg_name
+    
+  cluster_name = local.needs_truncation ? (var.cluster_name != "" ? substr(var.cluster_name, 0, 18) : "aks-${local.workload_part}-${local.suffix}") : local.potential_cluster_name
+  
+  # Other resource names - only shorten if main names were shortened
+  vnet_name = local.needs_truncation ? "vnet-${local.workload_part}-${local.suffix}" : "vnet-${local.clean_workload}-${local.clean_env}-${local.suffix}"
+    
+  subnet_name = local.needs_truncation ? "snet-aks-${local.env_part}-${local.suffix}" : "snet-aks-${local.clean_env}-${local.suffix}"
+    
+  log_name = local.needs_truncation ? "log-${local.workload_part}-${local.suffix}" : "log-${local.clean_workload}-${local.clean_env}-${local.suffix}"
+  
+  # Final validation: Calculate actual node RG length
+  expected_node_rg = "MC_${local.rg_name}_${local.cluster_name}_${var.location}"
+  node_rg_length = length(local.expected_node_rg)
+  
+  # Common tags
+  common_tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = var.owner
+    WorkloadName = var.workload_name
+    CreatedBy   = "AzureAIAgent"
+    NodeRGLength = local.node_rg_length  # For debugging
+  }
+}
+
+# Data sources
+data "azurerm_client_config" "current" {}
+
+# Resource Group
+resource "azurerm_resource_group" "main" {
+  name     = local.rg_name
+  location = var.location
+  tags     = local.common_tags
+}
+
+# Virtual Network
+resource "azurerm_virtual_network" "main" {
+  name                = local.vnet_name
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = local.common_tags
+}
+
+# Subnet for AKS
+resource "azurerm_subnet" "aks" {
+  name                 = local.subnet_name
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+# Log Analytics Workspace
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = local.log_name
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.common_tags
+}
+
+# AKS Cluster
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = local.cluster_name
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = local.cluster_name
+  kubernetes_version  = "1.31.10"
+
+  default_node_pool {
+    name                = "default"
+    node_count          = var.node_count
+    vm_size             = var.vm_size
+    os_disk_size_gb     = 30
+    vnet_subnet_id      = azurerm_subnet.aks.id
+    
+    upgrade_settings {
+      max_surge = "10%"
+    }
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  role_based_access_control_enabled = true
+
+  network_profile {
+    network_plugin     = "azure"
+    network_policy     = "azure"
+    dns_service_ip     = "10.2.0.10"
+    service_cidr       = "10.2.0.0/24"
+    load_balancer_sku  = "standard"
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  }
+
+  tags = local.common_tags
+}
+
+# Role assignment for AKS to manage network
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  scope                = azurerm_virtual_network.main.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.main.identity[0].principal_id
+}
+
+# Outputs
+output "resource_group_name" {
+  description = "Name of the created resource group"
+  value       = azurerm_resource_group.main.name
+}
+
+output "aks_cluster_name" {
+  description = "Name of the AKS cluster"
+  value       = azurerm_kubernetes_cluster.main.name
+}
+
+output "aks_cluster_id" {
+  description = "ID of the AKS cluster"
+  value       = azurerm_kubernetes_cluster.main.id
+}
+
+output "aks_fqdn" {
+  description = "FQDN of the AKS cluster"
+  value       = azurerm_kubernetes_cluster.main.fqdn
+}
+
+output "aks_node_resource_group" {
+  description = "Name of the AKS node resource group"
+  value       = azurerm_kubernetes_cluster.main.node_resource_group
 }
 
 output "kube_config" {
-  value = azurerm_kubernetes_cluster.main.kube_config_raw
-  sensitive = true
+  description = "Raw Kubernetes config to be used by kubectl and other compatible tools"
+  value       = azurerm_kubernetes_cluster.main.kube_config_raw
+  sensitive   = true
+}
+
+output "client_certificate" {
+  description = "Base64 encoded public certificate used by clients to authenticate to the Kubernetes cluster"
+  value       = azurerm_kubernetes_cluster.main.kube_config.0.client_certificate
+  sensitive   = true
+}
+
+output "client_key" {
+  description = "Base64 encoded private key used by clients to authenticate to the Kubernetes cluster"
+  value       = azurerm_kubernetes_cluster.main.kube_config.0.client_key
+  sensitive   = true
+}
+
+output "cluster_ca_certificate" {
+  description = "Base64 encoded public CA certificate used as the root of trust for the Kubernetes cluster"
+  value       = azurerm_kubernetes_cluster.main.kube_config.0.cluster_ca_certificate
+  sensitive   = true
+}
+
+output "host" {
+  description = "The Kubernetes cluster server host"
+  value       = azurerm_kubernetes_cluster.main.kube_config.0.host
+  sensitive   = true
+}
+
+output "log_analytics_workspace_id" {
+  description = "ID of the Log Analytics workspace"
+  value       = azurerm_log_analytics_workspace.main.id
+}
+
+output "vnet_id" {
+  description = "ID of the virtual network"
+  value       = azurerm_virtual_network.main.id
+}
+
+output "subnet_id" {
+  description = "ID of the AKS subnet"
+  value       = azurerm_subnet.aks.id
+}
+
+# Validation outputs for debugging
+output "expected_node_rg_name" {
+  description = "Expected node resource group name"
+  value       = local.expected_node_rg
+}
+
+output "node_rg_name_length" {
+  description = "Length of the expected node resource group name"
+  value       = local.node_rg_length
+}
+
+output "naming_truncation_applied" {
+  description = "Whether name truncation was applied due to Azure limits"
+  value       = local.needs_truncation
+}
+
+output "original_potential_length" {
+  description = "What the node RG length would have been without truncation"
+  value       = local.potential_node_rg_length
 }
 """;
 
