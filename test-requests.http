@@ -1,0 +1,75 @@
+### Test Azure AI Agent API
+
+# 1. Check agent status
+GET http://localhost:5050/api/agent/status
+
+###
+
+# 2. List resource groups
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "List all my resource groups",
+  "sessionId": "test-session-1"
+}
+
+###
+
+# 2. Test creating resource group WITHOUT specifying location
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "Create a resource group called 'ai-agent-test-rg'",
+  "sessionId": "test-session-1"
+}
+
+###
+
+# 3. Create a test resource group (REAL AZURE OPERATION - WILL CREATE ACTUAL RESOURCE)
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "Create a resource group called 'ai-agent-test-rg' in East US",
+  "sessionId": "test-session-1"
+}
+
+###
+
+# 4. Verify the resource group was created
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "List all my resource groups",
+  "sessionId": "test-session-1"
+}
+
+###
+
+# 5. Create a storage account in the new resource group
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "Create a storage account called 'aiagenttestsa001' in resource group ai-agent-test-rg",
+  "sessionId": "test-session-1"
+}
+
+###
+
+# 5. Get session history
+GET http://localhost:5050/api/agent/history/test-session-1
+
+###
+
+# 6. Deploy a web app with database
+POST http://localhost:5050/api/agent/chat
+Content-Type: application/json
+
+{
+  "message": "Deploy a web app with SQL database in resource group ai-agent-test-rg",
+  "sessionId": "test-session-2"
+}

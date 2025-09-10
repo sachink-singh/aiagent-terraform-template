@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Interactive Cards Demo</title>
+    <script src="https://unpkg.com/adaptivecards@latest/dist/adaptivecards.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .button:hover {
+            background: #005c99;
+        }
+        .card-container {
+            margin-top: 20px;
+            min-height: 200px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Interactive Cards Demo - Azure AI Agent</h1>
+            <p>Test the interactive cards functionality directly!</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🚀 Direct Interactive Cards Test</h2>
+            <p>This will fetch interactive cards directly from the API to prove they work:</p>
+            <button class="button" onclick="testInteractiveCards()">🎯 Load Interactive Pod Cards</button>
+            <div id="status"></div>
+            <div id="cardContainer" class="card-container"></div>
+        </div>
+
+        <div class="demo-section">
+            <h2>📋 Manual Chat Test</h2>
+            <p>Use these commands in the main chat interface at <a href="http://localhost:5051" target="_blank">http://localhost:5051</a>:</p>
+            <ul>
+                <li><code>show interactive cards for pods</code></li>
+                <li><code>test interactive cards</code></li>
+                <li><code>generate demo pod cards</code></li>
+                <li><code>show adaptive cards for kubernetes pods</code></li>
+            </ul>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔍 What to Expect</h2>
+            <p><strong>Interactive Cards should have:</strong></p>
+            <ul>
+                <li>✅ Individual clickable cards for each pod</li>
+                <li>✅ Green status indicators for running pods</li>
+                <li>✅ Expandable action menus when clicked</li>
+                <li>✅ Action buttons: 📄 View Logs, 🔍 Describe, 📊 Metrics, 🔄 Restart</li>
+                <li>✅ Commands automatically appended to chat when clicked</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        async function testInteractiveCards() {
+            showStatus('🔄 Loading interactive cards...', 'info');
+            
+            try {
+                const response = await fetch('/api/test/interactive-cards');
+                const data = await response.json();
+                
+                if (data.success && data.adaptiveCard) {
+                    showStatus('✅ Interactive cards loaded successfully!', 'success');
+                    renderAdaptiveCard(data.adaptiveCard);
+                } else {
+                    showStatus(`❌ Failed to load cards: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function renderAdaptiveCard(cardData) {
+            const cardContainer = document.getElementById('cardContainer');
+            cardContainer.innerHTML = '';
+            
+            try {
+                // Create an AdaptiveCard instance
+                const adaptiveCard = new AdaptiveCards.AdaptiveCard();
+                
+                // Set up action handling
+                adaptiveCard.onExecuteAction = function (action) {
+                    if (action.data) {
+                        const command = convertActionToCommand(action.data);
+                        showStatus(`🎯 Action clicked! Command: ${command}`, 'success');
+                        // In real app, this would append to chat
+                        alert(`Command would be executed: ${command}`);
+                    }
+                };
+                
+                // Parse and render the card
+                adaptiveCard.parse(cardData);
+                const renderedCard = adaptiveCard.render();
+                
+                if (renderedCard) {
+                    cardContainer.appendChild(renderedCard);
+                    showStatus('🎉 Interactive cards rendered! Click any pod to see actions.', 'success');
+                } else {
+                    showStatus('❌ Failed to render card', 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Render error: ${error.message}`, 'error');
+                console.error('Card render error:', error, cardData);
+            }
+        }
+
+        function convertActionToCommand(actionData) {
+            switch(actionData.action) {
+                case 'get_pod_logs':
+                    return `Get logs for pod ${actionData.podName} in deployment ${actionData.deploymentName}`;
+                case 'describe_pod':
+                    return `Describe pod ${actionData.podName} in deployment ${actionData.deploymentName}`;
+                case 'get_pod_metrics':
+                    return `Get metrics for pod ${actionData.podName} in deployment ${actionData.deploymentName}`;
+                case 'restart_pod':
+                    return `Restart pod ${actionData.podName} in deployment ${actionData.deploymentName}`;
+                default:
+                    return `Execute action: ${actionData.action}`;
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            showStatus('📚 Page loaded. Click the button above to test interactive cards!', 'info');
+        });
+    </script>
+</body>
+</html>

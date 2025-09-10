@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pod Name Debug Test</title>
+    <style>
+        .test-container { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+        .test-input { width: 100%; height: 200px; margin: 10px 0; }
+        .test-output { width: 100%; height: 300px; margin: 10px 0; border: 2px solid #007acc; }
+        .clickable-line { background-color: #333; color: white; padding: 2px 4px; margin: 0 2px; border-radius: 3px; cursor: pointer; }
+        .kubernetes-pod { background-color: #0078d4; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Pod Name Debug Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Input (Simulate Pod Listing)</h2>
+        <textarea class="test-input" id="testInput">📊 Found 18 pods in cluster aks-dev-aksworkload-si-002
+
+🔸 Namespace: kube-system (18 pods)
+
+azure-cns-mp2pg
+Status: Running | Restarts: 0 | Age: Unknown
+
+azure-ip-masq-agent-nbnf4  
+Status: Running | Restarts: 0 | Age: Unknown
+
+azure-npm-vm8xk
+Status: Running | Restarts: 0 | Age: Unknown
+
+cloud-node-manager-blkv2
+Status: Running | Restarts: 0 | Age: Unknown
+
+microsoft-defender-collector-misc-6c7847c69-w6zgp
+Status: Running | Restarts: 0 | Age: Unknown</textarea>
+
+        <button onclick="runTest()" style="padding: 10px 20px; font-size: 16px; background: #007acc; color: white; border: none; cursor: pointer;">🔄 Process with Semantic Detection</button>
+        
+        <h2>Processed Output (Should have clickable pod names)</h2>
+        <div class="test-output" id="testOutput"></div>
+        
+        <h2>Debug Console</h2>
+        <div id="debugConsole" style="background: #f0f0f0; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        // Copy the semantic detection logic from our formatting.js
+        const SemanticDetector = {
+            
+            // Console logging that also shows in our debug div
+            log: function(message, ...args) {
+                console.log(message, ...args);
+                const debugDiv = document.getElementById('debugConsole');
+                debugDiv.innerHTML += message + (args.length ? ' ' + args.join(' ') : '') + '<br>';
+                debugDiv.scrollTop = debugDiv.scrollHeight;
+            },
+
+            makeContentClickable: function(content) {
+                this.log('🧠 Using semantic detection approach');
+                this.log('📝 Full content to process:', content.substring(0, 200) + '...');
+                
+                let processedContent = content;
+                
+                // Skip processing if this looks like a welcome message or static content
+                if (this.isStaticContent(content)) {
+                    this.log('🚫 Skipping resource detection for static content');
+                    return content;
+                }
+                
+                // Split content into lines for analysis
+                const lines = content.split(/\r?\n/);
+                this.log(`📄 Processing ${lines.length} lines of content`);
+                
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    
+                    // Skip empty lines or lines that are clearly not resource listings
+                    if (!trimmedLine || trimmedLine.length < 3) return;
+                    
+                    // Look for potential resource names using semantic indicators
+                    const potentialResources = this.extractPotentialResourcesFromLine(trimmedLine);
+                    
+                    potentialResources.forEach(resource => {
+                        // Validate if this looks like a legitimate resource
+                        if (this.isLegitimateResource(resource.name, content)) {
+                            this.log(`🎯 Semantic detection found: ${resource.name} (type: ${resource.type})`);
+                            
+                            // Make it clickable using safe replacement - be more aggressive with replacement
+                            const escapedName = this.escapeRegexSpecialChars(resource.name);
+                            
+                            // Try multiple replacement strategies
+                            const strategies = [
+                                // Strategy 1: Word boundary replacement
+                                {
+                                    regex: new RegExp(`\\b${escapedName}\\b`, 'g'),
+                                    replacement: `<span class="clickable-line ${resource.cssClass}" data-resource-name="${resource.name}" data-resource-type="${resource.type}">${resource.name}</span>`
+                                },
+                                // Strategy 2: Standalone line replacement
+                                {
+                                    regex: new RegExp(`^(\\s*)${escapedName}(\\s.*)?$`, 'gm'),
+                                    replacement: `$1<span class="clickable-line ${resource.cssClass}" data-resource-name="${resource.name}" data-resource-type="${resource.type}">${resource.name}</span>$2`
+                                },
+                                // Strategy 3: Anywhere in line (most aggressive)
+                                {
+                                    regex: new RegExp(escapedName, 'g'),
+                                    replacement: `<span class="clickable-line ${resource.cssClass}" data-resource-name="${resource.name}" data-resource-type="${resource.type}">${resource.name}</span>`
+                                }
+                            ];
+                            
+                            let replaced = false;
+                            for (const strategy of strategies) {
+                                const beforeReplace = processedContent;
+                                processedContent = processedContent.replace(strategy.regex, strategy.replacement);
+                                
+                                if (processedContent !== beforeReplace) {
+                                    this.log(`✅ Made ${resource.name} clickable using strategy ${strategies.indexOf(strategy) + 1}`);
+                                    replaced = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!replaced) {
+                                this.log(`❌ Failed to make ${resource.name} clickable with any strategy`);
+                            }
+                        }
+                    });
+                });
+                
+                return processedContent;
+            },
+
+            isStaticContent: function(content) {
+                const staticIndicators = [
+                    /welcome to/i,
+                    /what you can ask me/i,
+                    /here's what i can help/i,
+                    /deploy an aks cluster/i,
+                    /create a storage account/i,
+                    /tips:/i,
+                    /infrastructure management/i,
+                    /type your request below/i,
+                    /examples of what you can ask/i,
+                    /resource deployment/i,
+                    /cluster operations/i,
+                    /storage management/i
+                ];
+                
+                return staticIndicators.some(pattern => pattern.test(content));
+            },
+
+            extractPotentialResourcesFromLine: function(line) {
+                const resources = [];
+                
+                // Split line into potential tokens by various delimiters
+                const tokens = line.split(/[\s\,\;\:\(\)\[\]]+/);
+                this.log(`🔍 Analyzing line tokens:`, tokens);
+                
+                tokens.forEach(token => {
+                    // Clean the token (remove common prefixes/suffixes that aren't part of names)
+                    const cleanToken = token.replace(/^[\[\(\,\;:]|[\]\)\,\;:]$/g, '').trim();
+                    
+                    if (cleanToken.length < 3) return;
+                    
+                    this.log(`🧪 Testing token: "${cleanToken}"`);
+                    
+                    // Determine resource type and validate
+                    const resourceType = this.determineResourceType(cleanToken);
+                    if (resourceType) {
+                        this.log(`✅ Token "${cleanToken}" identified as ${resourceType.type}`);
+                        resources.push({
+                            name: cleanToken,
+                            type: resourceType.type,
+                            cssClass: resourceType.cssClass
+                        });
+                    } else {
+                        this.log(`❌ Token "${cleanToken}" not identified as resource`);
+                    }
+                });
+                
+                this.log(`📋 Found ${resources.length} potential resources in line:`, resources.map(r => r.name));
+                return resources;
+            },
+
+            determineResourceType: function(token) {
+                // Convert to lowercase for analysis
+                const lowerToken = token.toLowerCase();
+                
+                // Kubernetes/Container naming patterns (very permissive)
+                if (this.looksLikeKubernetesPod(token)) {
+                    return { type: 'pod', cssClass: 'kubernetes-pod' };
+                }
+                
+                // Azure resource patterns
+                if (this.looksLikeAzureResource(token)) {
+                    const azureType = this.detectAzureResourceType(token);
+                    return { type: azureType, cssClass: `azure-${azureType}` };
+                }
+                
+                return null;
+            },
+
+            looksLikeKubernetesPod: function(token) {
+                const lowerToken = token.toLowerCase();
+                
+                this.log(`🧪 Checking if "${token}" looks like Kubernetes pod`);
+                
+                // Known Kubernetes prefixes (very comprehensive)
+                const k8sPrefixes = [
+                    'azure-', 'coredns-', 'kube-', 'csi-', 'cloud-', 'konnectivity-',
+                    'metrics-server-', 'microsoft-defender-', 'calico-', 'flannel-',
+                    'ingress-', 'nginx-', 'traefik-', 'istio-', 'linkerd-', 'envoy-',
+                    'prometheus-', 'grafana-', 'jaeger-', 'fluentd-', 'logstash-',
+                    'elasticsearch-', 'kibana-', 'redis-', 'mongodb-', 'postgres-',
+                    'mysql-', 'rabbitmq-', 'kafka-', 'zookeeper-', 'etcd-',
+                    'vault-', 'consul-', 'nomad-', 'cert-manager-', 'external-dns-',
+                    'cluster-autoscaler-', 'node-exporter-', 'kube-state-metrics-'
+                ];
+                
+                // Check for known prefixes
+                const hasKnownPrefix = k8sPrefixes.some(prefix => lowerToken.startsWith(prefix));
+                if (hasKnownPrefix) {
+                    this.log(`✅ "${token}" has known Kubernetes prefix`);
+                    return true;
+                }
+                
+                // General pod-like characteristics
+                // Contains hyphens and alphanumeric, reasonable length
+                if (token.length >= 5 && token.length <= 100 && /^[a-z0-9\-]+$/i.test(token)) {
+                    // Has typical pod structure (multiple parts separated by hyphens)
+                    const parts = token.split('-');
+                    if (parts.length >= 2) {
+                        // Check if it looks like a pod name pattern
+                        const hasGoodPattern = (
+                            // Last part looks like a hash or ID (at least 3 chars)
+                            /^[a-z0-9]{3,}$/i.test(parts[parts.length - 1]) ||
+                            // Second to last part looks like a hash (common in pod names)
+                            (parts.length >= 3 && /^[a-z0-9]{5,}$/i.test(parts[parts.length - 2]))
+                        );
+                        
+                        if (hasGoodPattern) {
+                            this.log(`✅ "${token}" has pod-like structure`);
+                            return true;
+                        }
+                    }
+                }
+                
+                this.log(`❌ "${token}" doesn't look like Kubernetes pod`);
+                return false;
+            },
+
+            looksLikeAzureResource: function(token) {
+                const lowerToken = token.toLowerCase();
+                
+                // Azure resource naming indicators
+                if (lowerToken.includes('rg') || lowerToken.includes('aks') || 
+                    lowerToken.includes('acr') || lowerToken.includes('stor') ||
+                    lowerToken.includes('vault') || lowerToken.includes('sql') ||
+                    lowerToken.includes('func') || lowerToken.includes('app')) {
+                    return /^[a-z0-9\-\.]+$/i.test(token) && token.length >= 3 && token.length <= 80;
+                }
+                
+                return false;
+            },
+
+            detectAzureResourceType: function(resourceName) {
+                const name = resourceName.toLowerCase();
+                
+                if (name.includes('rg') || name.startsWith('rg-') || name.endsWith('-rg')) return 'resource-group';
+                if (name.includes('storage') || name.includes('stor') || name.includes('sa')) return 'storage-account';
+                if (name.includes('app') || name.includes('webapp')) return 'app-service';
+                if (name.startsWith('aks-') || name.includes('cluster')) return 'aks-cluster';
+                if (name.startsWith('acr') || name.includes('registry')) return 'container-registry';
+                
+                // Default to generic Azure resource
+                return 'azure-resource';
+            },
+
+            isLegitimateResource: function(resourceName, fullContent) {
+                // Additional validation based on context
+                
+                // Too short or too long
+                if (resourceName.length < 3 || resourceName.length > 100) return false;
+                
+                // Contains only valid characters
+                if (!/^[a-zA-Z0-9\-\.]+$/.test(resourceName)) return false;
+                
+                // Avoid common false positives
+                const falsePositives = [
+                    'running', 'ready', 'pending', 'failed', 'error', 'warning', 'info',
+                    'creating', 'deleting', 'updating', 'succeeded', 'completed',
+                    'started', 'stopped', 'restarting', 'terminating', 'unknown',
+                    'active', 'inactive', 'enabled', 'disabled', 'available',
+                    'cpu', 'memory', 'disk', 'network', 'storage', 'compute',
+                    'status', 'state', 'health', 'condition', 'phase', 'type',
+                    'name', 'namespace', 'cluster', 'node', 'container', 'image',
+                    'version', 'build', 'release', 'latest', 'stable', 'beta',
+                    'true', 'false', 'yes', 'no', 'on', 'off', 'up', 'down'
+                ];
+                
+                if (falsePositives.includes(resourceName.toLowerCase())) return false;
+                
+                // If it appears in a context that suggests it's a resource listing
+                const contextIndicators = [
+                    'pod', 'service', 'deployment', 'namespace', 'node',
+                    'cluster', 'resource group', 'storage account', 'aks',
+                    'container', 'registry', 'vault', 'database'
+                ];
+                
+                const hasResourceContext = contextIndicators.some(indicator => 
+                    fullContent.toLowerCase().includes(indicator)
+                );
+                
+                return hasResourceContext;
+            },
+
+            escapeRegexSpecialChars: function(str) {
+                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+        };
+
+        function runTest() {
+            const inputText = document.getElementById('testInput').value;
+            const outputDiv = document.getElementById('testOutput');
+            const debugDiv = document.getElementById('debugConsole');
+            
+            // Clear debug console
+            debugDiv.innerHTML = '';
+            
+            // Process the content
+            const processedContent = SemanticDetector.makeContentClickable(inputText);
+            
+            // Display the result
+            outputDiv.innerHTML = processedContent;
+            
+            // Show summary
+            const clickableElements = outputDiv.querySelectorAll('.clickable-line');
+            SemanticDetector.log(`🎯 FINAL RESULT: ${clickableElements.length} clickable elements created`);
+            clickableElements.forEach(el => {
+                SemanticDetector.log(`   - ${el.getAttribute('data-resource-name')} (${el.getAttribute('data-resource-type')})`);
+            });
+        }
+
+        // Auto-run test on page load
+        window.onload = function() {
+            runTest();
+        };
+    </script>
+</body>
+</html>

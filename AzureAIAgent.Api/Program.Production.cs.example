@@ -1,0 +1,213 @@
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using AzureAIAgent.Core;
+using AzureAIAgent.Core.Interfaces;
+using AzureAIAgent.Core.Services;
+using AzureAIAgent.Core.Models;
+using AzureAIAgent.Plugins;
+using AzureAIAgent.Api.Models;
+using Azure.Identity;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Add memory cache
+builder.Services.AddMemoryCache();
+
+// Add core services
+builder.Services.AddSingleton<ISessionManager, InMemorySessionManager>();
+builder.Services.AddSingleton<ITemplateDeployer, BicepTemplateDeployer>();
+
+// Configure Azure Authentication based on environment
+ConfigureAzureAuthentication(builder);
+
+// Configure Azure Command Executor
+ConfigureAzureCommandExecutor(builder);
+
+// Configure Semantic Kernel
+ConfigureSemanticKernel(builder);
+
+// Add main AI Agent
+builder.Services.AddSingleton<IAzureAIAgent, AzureAIAgent.Core.AzureAIAgent>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Enable static files for chat interface
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+app.UseAuthorization();
+
+// Azure AI Agent endpoints
+app.MapPost("/api/agent/chat", async (ChatRequest request, IAzureAIAgent agent) =>
+{
+    try
+    {
+        var result = await agent.ProcessRequestAsync(request.Message, request.SessionId ?? Guid.NewGuid().ToString());
+        
+        return Results.Ok(new ChatResponse
+        {
+            Message = result.Data ?? "I apologize, but I couldn't process your request.",
+            SessionId = request.SessionId ?? Guid.NewGuid().ToString(),
+            Success = result.IsSuccess,
+            Error = result.ErrorMessage
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"An error occurred: {ex.Message}");
+    }
+});
+
+app.MapGet("/api/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
+
+app.MapControllers();
+
+app.Run();
+
+static void ConfigureAzureAuthentication(WebApplicationBuilder builder)
+{
+    // Configure Azure Authentication based on deployment environment
+    builder.Services.AddSingleton<TokenCredential>(provider =>
+    {
+        var environment = builder.Environment.EnvironmentName;
+        var configuration = provider.GetRequiredService<IConfiguration>();
+        
+        // Production environments: Use Managed Identity first, then Service Principal
+        if (environment == "Production" || environment == "Staging")
+        {
+            var managedIdentityClientId = configuration["Azure:ManagedIdentity:ClientId"];
+            
+            var options = new DefaultAzureCredentialOptions
+            {
+                // Exclude interactive flows in production
+                ExcludeInteractiveBrowserCredential = true,
+                ExcludeAzureCliCredential = true,
+                ExcludeAzurePowerShellCredential = true,
+                ExcludeVisualStudioCredential = true,
+                ExcludeVisualStudioCodeCredential = true,
+                
+                // Managed Identity configuration
+                ManagedIdentityClientId = managedIdentityClientId
+            };
+            
+            return new DefaultAzureCredential(options);
+        }
+        
+        // Development: Allow Azure CLI and other interactive methods
+        var devOptions = new DefaultAzureCredentialOptions
+        {
+            // In development, allow CLI and interactive flows
+            ExcludeInteractiveBrowserCredential = false,
+            ExcludeAzureCliCredential = false
+        };
+        
+        return new DefaultAzureCredential(devOptions);
+    });
+}
+
+static void ConfigureAzureCommandExecutor(WebApplicationBuilder builder)
+{
+    // Choose executor based on environment and configuration
+    var useAzureSDK = builder.Configuration.GetValue<bool>("Azure:UseSDKExecutor", true);
+    var environment = builder.Environment.EnvironmentName;
+    
+    if (useAzureSDK && (environment == "Production" || environment == "Staging"))
+    {
+        // Production: Use Azure SDK executor for better authentication support
+        builder.Services.AddSingleton<IAzureCommandExecutor, AzureSDKCommandExecutor>();
+        
+        // Add required Azure SDK packages to project file:
+        // <PackageReference Include="Azure.ResourceManager" Version="1.9.0" />
+        // <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0" />
+        // <PackageReference Include="Azure.ResourceManager.Storage" Version="1.2.0" />
+        // <PackageReference Include="Azure.ResourceManager.Compute" Version="1.4.0" />
+        // <PackageReference Include="Azure.ResourceManager.AppService" Version="1.1.0" />
+    }
+    else
+    {
+        // Development: Use Azure CLI executor (requires az login)
+        builder.Services.AddSingleton<IAzureCommandExecutor, AzureCommandExecutor>();
+    }
+}
+
+static void ConfigureSemanticKernel(WebApplicationBuilder builder)
+{
+    var kernelBuilder = Kernel.CreateBuilder();
+
+    // Get AI configuration
+    var openAiApiKey = builder.Configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+    var azureOpenAiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
+    var azureOpenAiApiKey = builder.Configuration["AzureOpenAI:ApiKey"];
+
+    // Configure AI service
+    if (!string.IsNullOrEmpty(openAiApiKey))
+    {
+        kernelBuilder.AddOpenAIChatCompletion(
+            modelId: builder.Configuration["OpenAI:Model"] ?? "gpt-4o", 
+            apiKey: openAiApiKey);
+    }
+    else if (!string.IsNullOrEmpty(azureOpenAiEndpoint))
+    {
+        // Production: Use Managed Identity for Azure OpenAI
+        if (builder.Environment.IsProduction())
+        {
+            kernelBuilder.AddAzureOpenAIChatCompletion(
+                deploymentName: builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4",
+                endpoint: azureOpenAiEndpoint,
+                credential: builder.Services.BuildServiceProvider().GetRequiredService<TokenCredential>());
+        }
+        else if (!string.IsNullOrEmpty(azureOpenAiApiKey))
+        {
+            // Development: Use API key
+            kernelBuilder.AddAzureOpenAIChatCompletion(
+                deploymentName: builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4",
+                endpoint: azureOpenAiEndpoint,
+                apiKey: azureOpenAiApiKey);
+        }
+        else
+        {
+            throw new InvalidOperationException("Azure OpenAI endpoint configured but no authentication method available.");
+        }
+    }
+    else
+    {
+        throw new InvalidOperationException("No AI service configured. Please set OpenAI or Azure OpenAI configuration.");
+    }
+
+    // Add plugins
+    kernelBuilder.Plugins.AddFromType<AzureResourcePlugin>();
+
+    var kernel = kernelBuilder.Build();
+    builder.Services.AddSingleton(kernel);
+
+    // Add chat completion service
+    builder.Services.AddSingleton<IChatCompletionService>(provider => 
+        provider.GetRequiredService<Kernel>().GetRequiredService<IChatCompletionService>());
+}

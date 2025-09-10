@@ -1,0 +1,2775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure AI Infrastructure Agent - Enterprise Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Professional Enterprise Color Palette */
+            --primary-blue: #0078d4;
+            --primary-dark: #005a9e;
+            --primary-light: #40a4e8;
+            --secondary-blue: #00bcf2;
+            --accent-teal: #00d4aa;
+            --success-green: #16c60c;
+            --warning-orange: #ff8c00;
+            --error-red: #d83b01;
+            
+            /* Enhanced Neutral Palette */
+            --neutral-100: #faf9f8;
+            --neutral-200: #f3f2f1;
+            --neutral-300: #edebe9;
+            --neutral-400: #d2d0ce;
+            --neutral-500: #a19f9d;
+            --neutral-600: #605e5c;
+            --neutral-700: #323130;
+            --neutral-800: #201f1e;
+            --neutral-900: #11100f;
+            
+            /* Professional Surfaces */
+            --surface-primary: #ffffff;
+            --surface-secondary: #fafafa;
+            --surface-tertiary: #f8f8f8;
+            --surface-elevated: #ffffff;
+            --surface-overlay: rgba(0, 0, 0, 0.4);
+            
+            /* Enhanced Typography */
+            --text-primary: #323130;
+            --text-secondary: #605e5c;
+            --text-tertiary: #a19f9d;
+            --text-inverse: #ffffff;
+            --text-accent: #0078d4;
+            
+            /* Professional Shadows */
+            --shadow-depth-2: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04);
+            --shadow-depth-4: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 2px rgba(0, 0, 0, 0.06);
+            --shadow-depth-8: 0 4px 8px rgba(0, 0, 0, 0.12), 0 0 4px rgba(0, 0, 0, 0.08);
+            --shadow-depth-16: 0 8px 16px rgba(0, 0, 0, 0.14), 0 0 8px rgba(0, 0, 0, 0.1);
+            --shadow-depth-24: 0 12px 24px rgba(0, 0, 0, 0.16), 0 0 12px rgba(0, 0, 0, 0.12);
+            
+            /* Border Radius */
+            --border-radius-small: 4px;
+            --border-radius-medium: 8px;
+            --border-radius-large: 12px;
+            --border-radius-xl: 16px;
+            --border-radius-xxl: 20px;
+            
+            /* Transitions */
+            --transition-fast: 0.15s ease-out;
+            --transition-medium: 0.25s ease-out;
+            --transition-slow: 0.35s ease-out;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow: hidden;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 1400px;
+            height: 95vh;
+            min-height: 600px;
+            background: var(--surface-elevated);
+            border-radius: var(--border-radius-xxl);
+            box-shadow: var(--shadow-depth-24);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 70%, var(--secondary-blue) 100%);
+            color: var(--text-inverse);
+            padding: 16px 24px;
+            position: relative;
+            overflow: hidden;
+            border-top-left-radius: var(--border-radius-xxl);
+            border-top-right-radius: var(--border-radius-xxl);
+        }
+
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.4;
+        }
+
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+            border-radius: var(--border-radius-large);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all var(--transition-medium);
+        }
+
+        .header-icon:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.025em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header .subtitle {
+            opacity: 0.9;
+            font-size: 13px;
+            font-weight: 400;
+            margin-top: 6px;
+            letter-spacing: 0.01em;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 1px;
+        }
+
+        /* Enhanced Chat Messages */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(to bottom, var(--surface-secondary), var(--surface-tertiary));
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            animation: messageSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: var(--border-radius-large);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            position: relative;
+            font-size: 15px;
+            line-height: 1.4;
+            box-shadow: var(--shadow-depth-4);
+            transition: all var(--transition-medium);
+        }
+
+        .message-bubble:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-depth-8);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-light) 100%);
+            color: var(--text-inverse);
+            border-top-right-radius: 8px;
+            font-weight: 500;
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--surface-elevated);
+            border: 1px solid var(--neutral-300);
+            color: var(--text-primary);
+            border-top-left-radius: 8px;
+            backdrop-filter: blur(10px);
+            overflow: visible; /* Allow adaptive card dropdowns to overflow */
+        }
+
+        /* Ensure adaptive cards in message bubbles don't get clipped */
+        .message.assistant .message-bubble .adaptive-card-container {
+            overflow: visible !important;
+            position: relative;
+            z-index: 1000; /* High z-index to ensure dropdowns appear above other content */
+        }
+
+        /* Enhanced Code Block Styling */
+        .message-bubble pre {
+            background: var(--neutral-100);
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--border-radius-medium);
+            padding: 16px 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: var(--shadow-depth-2);
+        }
+
+        .message-bubble code {
+            background: var(--neutral-200);
+            padding: 3px 6px;
+            border-radius: var(--border-radius-small);
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        .message-bubble pre code {
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        /* Enhanced code container with edit functionality */
+        .code-container {
+            margin: 16px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-header {
+            background: #21262d;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-language {
+            color: #f0f6fc;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-language::before {
+            content: "📄";
+            font-size: 16px;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            min-width: 70px;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: #2ea043;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn.copy-btn {
+            background: #1f6feb;
+        }
+
+        .action-btn.copy-btn:hover {
+            background: #388bfd;
+        }
+
+        .action-btn.copy-btn.copied {
+            background: #238636;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .action-btn.deploy-btn {
+            background: #238636;
+        }
+
+        .action-btn.deploy-btn:hover {
+            background: #2ea043;
+        }
+
+        .action-btn.edit-btn {
+            background: #fd7e14;
+        }
+
+        .action-btn.edit-btn:hover {
+            background: #ff8c00;
+        }
+
+        .btn-icon {
+            font-size: 14px;
+        }
+
+        .btn-text {
+            font-size: 11px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .terraform-editor-modal {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            color: #f0f6fc;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #f0f6fc;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .parameter-section {
+            padding: 20px 24px;
+            border-bottom: 1px solid #30363d;
+            background: #161b22;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .parameter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .parameter-label {
+            color: #f0f6fc;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .parameter-label.required::after {
+            content: " *";
+            color: #f85149;
+        }
+
+        .parameter-input {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #f0f6fc;
+            font-size: 14px;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: #1f6feb;
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+        }
+
+        .parameter-description {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .editor-section {
+            flex: 1;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .code-editor {
+            width: 100%;
+            height: 400px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            color: #f0f6fc;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            overflow-y: auto;
+        }
+
+        .code-editor:focus {
+            outline: none;
+            border-color: #1f6feb;
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #30363d;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background: #238636;
+            color: white;
+            border-color: #238636;
+        }
+
+        .modal-btn-primary:hover {
+            background: #2ea043;
+            border-color: #2ea043;
+        }
+
+        .modal-btn-secondary {
+            background: #21262d;
+            color: #f0f6fc;
+            border-color: #30363d;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        /* Modern Deployment Modal Styles */
+        .deployment-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .deployment-modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .deployment-modal {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .deployment-modal-backdrop.show .deployment-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .deployment-modal-content {
+            padding: 0;
+        }
+
+        .deployment-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-bottom: 1px solid #30363d;
+            background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+            color: white;
+        }
+
+        .deployment-modal-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .deployment-modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .deployment-status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .deployment-progress-section {
+            padding: 24px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .deployment-message {
+            color: #f0f6fc;
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .deployment-progress-bar-container {
+            background: #21262d;
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .deployment-progress-bar {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .deployment-progress-fill {
+            background: linear-gradient(90deg, #1f6feb, #388bfd);
+            height: 100%;
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .deployment-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .deployment-steps {
+            padding: 24px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .deployment-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .deployment-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .deployment-step.active {
+            opacity: 1;
+        }
+
+        .deployment-step.processing .step-spinner {
+            display: block;
+        }
+
+        .step-circle {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #30363d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            background: #21262d;
+            transition: all 0.3s ease;
+        }
+
+        .deployment-step.active .step-circle {
+            border-color: #1f6feb;
+            background: #1f6feb;
+            color: white;
+        }
+
+        .deployment-step.completed .step-circle {
+            border-color: #238636;
+            background: #238636;
+            color: white;
+        }
+
+        .deployment-step.error .step-circle {
+            border-color: #da3633;
+            background: #da3633;
+            color: white;
+        }
+
+        .deployment-step.completed .step-circle {
+            border-color: #238636;
+            background: #238636;
+            color: white;
+        }
+
+        .deployment-step.error .step-circle {
+            border-color: #da3633;
+            background: #da3633;
+            color: white;
+        }
+
+        .step-number {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .step-spinner {
+            display: none;
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            border: 2px solid transparent;
+            border-top: 2px solid #388bfd;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            color: #f0f6fc;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .step-description {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .deployment-logs {
+            background: #0d1117;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .deployment-logs.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .logs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid #30363d;
+            cursor: pointer;
+            color: #f0f6fc;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logs-header:hover {
+            background: #21262d;
+        }
+
+        .logs-toggle {
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .logs-toggle:hover {
+            background: #30363d;
+            color: #f0f6fc;
+        }
+
+        .logs-content {
+            padding: 16px 24px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .log-entry {
+            color: #8b949e;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .log-entry:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Old Progress Bar Styles - Keep for compatibility */
+        .deployment-progress {
+            display: none;
+            padding: 20px 24px;
+            border-top: 1px solid #30363d;
+            background: #161b22;
+        }
+
+        .deployment-progress.show {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            color: #f0f6fc;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .progress-status {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .progress-bar-container {
+            background: #21262d;
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #1f6feb, #388bfd);
+            height: 100%;
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar.pulsing::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .progress-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 60%;
+            right: -40%;
+            height: 2px;
+            background: #30363d;
+            z-index: 1;
+        }
+
+        .progress-step.completed::after {
+            background: #238636;
+        }
+
+        .progress-step.active::after {
+            background: linear-gradient(90deg, #238636 50%, #30363d 50%);
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #30363d;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .progress-step.completed .step-icon {
+            background: #238636;
+            color: white;
+        }
+
+        .progress-step.active .step-icon {
+            background: #1f6feb;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .step-label {
+            color: #8b949e;
+            font-size: 11px;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .progress-step.completed .step-label {
+            color: #238636;
+        }
+
+        .progress-step.active .step-label {
+            color: #f0f6fc;
+            font-weight: 500;
+        }
+
+        .progress-details {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 12px;
+            color: #8b949e;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .progress-log {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        /* Enhanced Terraform syntax highlighting with clean dark theme */
+        .terraform-block {
+            background: #0d1117 !important;
+            color: #f0f6fc !important;
+            border-radius: 0 !important;
+            padding: 20px !important;
+            margin: 0 !important;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: none !important;
+            box-shadow: none !important;
+            position: relative;
+            white-space: pre;
+            tab-size: 2;
+        }
+
+        /* Reset all child elements to avoid individual backgrounds */
+        .terraform-block *,
+        .code-block * {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: inherit !important; /* Prevent large header fonts */
+            font-weight: normal !important; /* Prevent bold headers */
+            line-height: inherit !important;
+        }
+
+        /* Specifically override headers inside code blocks */
+        .terraform-block h1,
+        .terraform-block h2, 
+        .terraform-block h3,
+        .terraform-block h4,
+        .terraform-block h5,
+        .terraform-block h6,
+        .code-block h1,
+        .code-block h2,
+        .code-block h3,
+        .code-block h4,
+        .code-block h5,
+        .code-block h6 {
+            font-size: 14px !important;
+            font-weight: normal !important;
+            color: #8b949e !important; /* Comment color for headers inside code */
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Terraform syntax highlighting colors */
+        .terraform-keyword {
+            color: #ff7b72 !important;
+            font-weight: bold !important;
+            background: transparent !important;
+        }
+
+        .terraform-string {
+            color: #a5d6ff !important;
+            background: transparent !important;
+        }
+
+        .terraform-comment {
+            color: #8b949e !important;
+            font-style: italic !important;
+            background: transparent !important;
+        }
+
+        .terraform-resource {
+            color: #7ee787 !important;
+            font-weight: 500 !important;
+            background: transparent !important;
+        }
+
+        .terraform-property {
+            color: #79c0ff !important;
+            background: transparent !important;
+        }
+
+        .terraform-value {
+            color: #ffa657 !important;
+            background: transparent !important;
+        }
+
+        .terraform-number {
+            color: #79c0ff !important;
+            background: transparent !important;
+        }
+
+        .terraform-boolean {
+            color: #ff7b72 !important;
+            font-weight: bold !important;
+            background: transparent !important;
+        }
+
+        /* Enhanced code blocks for other languages */
+        .code-block, .bash-block, .json-block {
+            background: #0d1117 !important;
+            color: #f0f6fc !important;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .bash-block::before {
+            content: "bash";
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #1f6feb;
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .json-block::before {
+            content: "json";
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #f85149;
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Clickable line styles for agent output */
+        .clickable-line {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 2px;
+            background: linear-gradient(135deg, #0078d4, #00bcf2);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
+        }
+
+        .clickable-line:hover {
+            background: linear-gradient(135deg, #106ebe, #0099d8);
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+
+        .clickable-line:hover::after {
+            content: "🖱️ Click to add to chat";
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Resource-specific clickable styles - All use beautiful blue gradient */
+        .clickable-line.pod-name,
+        .clickable-line.deployment-name,
+        .clickable-line.service-name,
+        .clickable-line.namespace-name,
+        .clickable-line.configmap-name,
+        .clickable-line.secret-name,
+        .clickable-line.ingress-name,
+        .clickable-line.job-name,
+        .clickable-line.cronjob-name,
+        .clickable-line.resource-group-name,
+        .clickable-line.storage-account-name,
+        .clickable-line.app-service-name,
+        .clickable-line.aks-cluster-name,
+        .clickable-line.container-registry-name,
+        .clickable-line.key-vault-name,
+        .clickable-line.database-name,
+        .clickable-line.virtual-machine-name,
+        .clickable-line.function-app-name {
+            /* All resources use the same beautiful blue gradient */
+            background: linear-gradient(135deg, #0078d4, #00bcf2);
+            color: white;
+            border: none;
+        }
+        }
+        
+        .clickable-line.virtual-network-name {
+            color: #40e0d0;
+            border-left: 3px solid #40e0d0;
+        }
+        
+        .clickable-line.azure-resource-name {
+            color: #0078d4;
+            border-left: 3px solid #0078d4;
+        }
+
+        /* Beautiful Blue Gradient Clickable Resource Styling */
+        .clickable-resource {
+            background: linear-gradient(135deg, #0078d4, #00bcf2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 2px;
+            box-shadow: 0 2px 4px rgba(0,120,212,0.3);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clickable-resource:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,120,212,0.4);
+            background: linear-gradient(135deg, #005a9e, #0078d4);
+        }
+
+        .clickable-resource:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,120,212,0.3);
+        }
+
+        .clickable-resource::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .clickable-resource:hover::before {
+            left: 100%;
+        }
+
+        /* Pod-specific gradient styling */
+        .clickable-resource[data-resource-type="pod"] {
+            background: linear-gradient(135deg, #0078d4, #40a4e8);
+            box-shadow: 0 2px 4px rgba(0,120,212,0.3);
+        }
+
+        .clickable-resource[data-resource-type="pod"]:hover {
+            background: linear-gradient(135deg, #005a9e, #0078d4);
+            box-shadow: 0 4px 12px rgba(0,120,212,0.5);
+        }
+
+        /* Terraform Action Button Styles */
+        .terraform-action {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 4px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .terraform-action[data-action="deploy"] {
+            background: linear-gradient(135deg, #16c60c, #0ea30c);
+            box-shadow: 0 2px 8px rgba(22, 198, 12, 0.3);
+        }
+        
+        .terraform-action[data-action="deploy"]:hover {
+            background: linear-gradient(135deg, #0ea30c, #0b8a0a);
+            box-shadow: 0 4px 12px rgba(22, 198, 12, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .terraform-action[data-action="edit"] {
+            background: linear-gradient(135deg, #ff8c00, #e67300);
+            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+        }
+        
+        .terraform-action[data-action="edit"]:hover {
+            background: linear-gradient(135deg, #e67300, #cc6600);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .terraform-action[data-action="cancel"] {
+            background: linear-gradient(135deg, #d83b01, #c43201);
+            box-shadow: 0 2px 8px rgba(216, 59, 1, 0.3);
+        }
+        
+        .terraform-action[data-action="cancel"]:hover {
+            background: linear-gradient(135deg, #c43201, #a82900);
+            box-shadow: 0 4px 12px rgba(216, 59, 1, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Terraform Actions Container */
+        .terraform-actions-container {
+            margin: 16px 0 !important;
+            padding: 12px !important;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+            border-radius: 8px !important;
+            border-left: 4px solid var(--primary-blue) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+            font-family: 'Inter', sans-serif !important;
+            clear: both !important;
+            display: block !important;
+        }
+
+        .terraform-actions-container strong {
+            color: var(--primary-blue) !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Resource listing container styles */
+        .pod-listing, .deployment-listing, .service-listing, 
+        .namespace-listing, .configmap-listing, .secret-listing,
+        .ingress-listing, .job-listing, .cronjob-listing {
+            border-left: 4px solid var(--neutral-300);
+            padding-left: 12px;
+            margin: 8px 0;
+        }
+
+        /* Pod status arrow styling */
+        .pod-status-arrow {
+            display: inline-block;
+            margin-left: 6px;
+            margin-right: 2px;
+            color: var(--neutral-500);
+            font-size: 16px;
+            transition: color 0.3s ease, transform 0.2s ease;
+            vertical-align: middle;
+        }
+
+        .pod-status-arrow::before {
+            content: "↘";
+            margin-right: 2px;
+            color: #4a90e2;
+        }
+
+        .pod-status-running .pod-status-arrow {
+            color: var(--success-green);
+        }
+
+        .pod-status-running .pod-status-arrow::before {
+            content: "↘";
+            color: #28a745;
+            text-shadow: 0 0 3px rgba(40, 167, 69, 0.3);
+        }
+
+        .pod-status-pending .pod-status-arrow {
+            color: var(--warning-orange);
+        }
+
+        .pod-status-pending .pod-status-arrow::before {
+            content: "↘";
+            color: #ffc107;
+            text-shadow: 0 0 3px rgba(255, 193, 7, 0.3);
+        }
+
+        .pod-status-failed .pod-status-arrow {
+            color: var(--error-red);
+        }
+
+        .pod-status-failed .pod-status-arrow::before {
+            content: "↘";
+            color: #dc3545;
+            text-shadow: 0 0 3px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Pod listing styling */
+        .pod-listing {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.3;
+            margin: 8px 0;
+        }
+
+        .pod-name {
+            font-weight: 600;
+            color: var(--primary-blue);
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+
+        .pod-details {
+            margin-left: 16px;
+            color: var(--neutral-600);
+            margin-top: 2px;
+        }
+
+        /* Reduce spacing in pod listings */
+        .pod-listing br {
+            line-height: 1.1;
+        }
+
+        .pod-listing .pod-name + br {
+            display: none;
+        }
+
+        .pod-listing .pod-name {
+            margin-right: 4px;
+            font-size: 12px;
+        }
+
+        .clickable-header {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 1px 0;
+            background: linear-gradient(90deg, 
+                rgba(0, 188, 242, 0.12) 0%, 
+                rgba(0, 188, 242, 0.06) 100%);
+            border-left: 4px solid var(--secondary-blue);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clickable-header:hover {
+            background: linear-gradient(90deg, 
+                rgba(0, 188, 242, 0.2) 0%, 
+                rgba(0, 188, 242, 0.1) 100%);
+            transform: translateX(3px);
+            box-shadow: 0 2px 10px rgba(0, 188, 242, 0.2);
+        }
+
+        .clickable-header:hover::after {
+            content: "📋 Click to add header to chat";
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Animation for successful click */
+        .clickable-line.clicked, .clickable-header.clicked {
+            background: linear-gradient(90deg, 
+                rgba(22, 198, 12, 0.2) 0%, 
+                rgba(22, 198, 12, 0.1) 100%);
+            border-left-color: var(--success-green);
+            animation: clickSuccess 0.5s ease;
+        }
+
+        @keyframes clickSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Deployment action clickable styles */
+        .deployment-action-clickable {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 4px 0;
+            background: linear-gradient(135deg, 
+                rgba(0, 120, 212, 0.1) 0%, 
+                rgba(0, 120, 212, 0.05) 100%);
+            border: 2px solid rgba(0, 120, 212, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 120, 212, 0.1);
+        }
+
+        .deployment-action-clickable:hover {
+            background: linear-gradient(135deg, 
+                rgba(0, 120, 212, 0.2) 0%, 
+                rgba(0, 120, 212, 0.1) 100%);
+            border-color: rgba(0, 120, 212, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.2);
+        }
+
+        .deployment-action-clickable[data-action="deploy"] {
+            border-color: rgba(76, 175, 80, 0.3);
+            background: linear-gradient(135deg, 
+                rgba(76, 175, 80, 0.1) 0%, 
+                rgba(76, 175, 80, 0.05) 100%);
+        }
+
+        .deployment-action-clickable[data-action="deploy"]:hover {
+            border-color: rgba(76, 175, 80, 0.5);
+            background: linear-gradient(135deg, 
+                rgba(76, 175, 80, 0.2) 0%, 
+                rgba(76, 175, 80, 0.1) 100%);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .deployment-action-clickable[data-action="edit"] {
+            border-color: rgba(255, 193, 7, 0.3);
+            background: linear-gradient(135deg, 
+                rgba(255, 193, 7, 0.1) 0%, 
+                rgba(255, 193, 7, 0.05) 100%);
+        }
+
+        .deployment-action-clickable[data-action="edit"]:hover {
+            border-color: rgba(255, 193, 7, 0.5);
+            background: linear-gradient(135deg, 
+                rgba(255, 193, 7, 0.2) 0%, 
+                rgba(255, 193, 7, 0.1) 100%);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
+
+        .deployment-action-clickable[data-action="cancel"] {
+            border-color: rgba(244, 67, 54, 0.3);
+            background: linear-gradient(135deg, 
+                rgba(244, 67, 54, 0.1) 0%, 
+                rgba(244, 67, 54, 0.05) 100%);
+        }
+
+        .deployment-action-clickable[data-action="cancel"]:hover {
+            border-color: rgba(244, 67, 54, 0.5);
+            background: linear-gradient(135deg, 
+                rgba(244, 67, 54, 0.2) 0%, 
+                rgba(244, 67, 54, 0.1) 100%);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+        }
+
+        /* Notification system styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            min-width: 300px;
+            max-width: 400px;
+            z-index: 10000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-success {
+            border-left-color: var(--success-green);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        /* Notification system */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 12px 16px;
+            z-index: 10000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-blue);
+            max-width: 350px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-success {
+            border-left-color: var(--success-green);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 12px 16px;
+            max-width: 350px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 10000;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-left-color: var(--success-green);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .message-bubble pre {
+            background: #161b22 !important;
+            color: #f0f6fc !important;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 400px;
+            min-height: 100px;
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .message-bubble code {
+            background: #21262d !important;
+            color: #f0f6fc !important;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            font-size: 13px;
+        }
+
+        .message-bubble pre code {
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            color: inherit !important;
+        }
+
+        /* Enhanced styling for logs display */
+        .message-bubble pre.logs-block {
+            background: #0d1117 !important;
+            color: #f0f6fc !important;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 400px;
+            min-height: 200px;
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            scrollbar-width: thin;
+            scrollbar-color: #58a6ff #161b22;
+            position: relative;
+        }
+
+        .message-bubble pre.logs-block::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        .message-bubble pre.logs-block::-webkit-scrollbar-track {
+            background: #161b22;
+            border-radius: 6px;
+        }
+
+        .message-bubble pre.logs-block::-webkit-scrollbar-thumb {
+            background: #58a6ff;
+            border-radius: 6px;
+            border: 2px solid #161b22;
+        }
+
+        .message-bubble pre.logs-block::-webkit-scrollbar-thumb:hover {
+            background: #79c0ff;
+        }
+
+        .message-bubble pre.logs-block::-webkit-scrollbar-corner {
+            background: #161b22;
+        }
+
+        /* Add a subtle indicator for scrollable content */
+        .message-bubble pre.logs-block.scrollable-logs::after {
+            content: '⬇ Scroll for more ⬇';
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            background: rgba(88, 166, 255, 0.8);
+            color: #0d1117;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .message-bubble pre.logs-block.scrollable-logs:hover::after {
+            opacity: 1;
+        }
+
+        .message-bubble pre.logs-block.scrolled-to-bottom::after {
+            opacity: 0 !important;
+        }
+
+        /* Ensure logs are always scrollable when content overflows */
+        .message-bubble pre.logs-block {
+            box-sizing: border-box;
+            /* Force scrollbar to always be visible when content overflows */
+            overflow-y: scroll;
+        }
+
+        /* Enhanced Input Container */
+        .chat-input-container {
+            padding: 28px 32px 32px 32px;
+            background: linear-gradient(to top, var(--surface-elevated), var(--surface-secondary));
+            border-top: 1px solid var(--neutral-300);
+            position: relative;
+            backdrop-filter: blur(20px);
+            border-bottom-left-radius: var(--border-radius-xxl);
+            border-bottom-right-radius: var(--border-radius-xxl);
+        }
+
+        /* Enhanced Progress Bar */
+        .progress-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--neutral-200);
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity var(--transition-medium);
+        }
+
+        .progress-container.visible {
+            opacity: 1;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue), var(--accent-teal));
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: gradientMove 2s ease-in-out infinite;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255,255,255,0.4), 
+                transparent);
+            animation: progressShimmer 1.8s infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Enhanced Deployment Status */
+        .deployment-status {
+            position: absolute;
+            top: -40px;
+            left: 32px;
+            right: 32px;
+            background: rgba(0, 120, 212, 0.08);
+            border: 1px solid rgba(0, 120, 212, 0.2);
+            border-radius: var(--border-radius-large);
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary-blue);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-depth-4);
+            z-index: 500;
+        }
+
+        .deployment-status.visible {
+            display: flex;
+        }
+
+        .deployment-status .status-icon {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--primary-blue);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: statusSpin 1.2s linear infinite;
+        }
+
+        @keyframes statusSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Simple Terraform Live Output */
+        .terraform-live-output {
+            position: absolute;
+            top: -280px;
+            left: 32px;
+            right: 32px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-depth-8);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .terraform-header {
+            background: #2d2d2d;
+            color: #ffffff;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terraform-command {
+            margin-left: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00d4aa;
+            background: rgba(0, 212, 170, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .terraform-console {
+            max-height: 180px;
+            overflow-y: auto;
+            background: #1a1a1a;
+        }
+
+        .terraform-console pre {
+            margin: 0;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #ffffff;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .terraform-console::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terraform-console::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        .terraform-console::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        /* Enhanced Input Form */
+        .chat-input-form {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            position: relative;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--border-radius-xl);
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: all var(--transition-medium);
+            background: #ffffff !important;
+            color: #323130 !important;
+            box-shadow: var(--shadow-depth-2);
+            resize: none;
+            min-height: 56px;
+            max-height: 140px;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow-depth-4), 0 0 0 3px rgba(0, 120, 212, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .chat-input:disabled {
+            background-color: var(--neutral-200);
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+            border-color: var(--neutral-400);
+            transform: none;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        /* Enhanced Send Button */
+        .send-button {
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+            color: var(--text-inverse);
+            border: none;
+            border-radius: var(--border-radius-xl);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all var(--transition-medium);
+            min-width: 100px;
+            box-shadow: var(--shadow-depth-4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+            box-shadow: var(--shadow-depth-8);
+            transform: translateY(-1px);
+        }
+
+        .send-button:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .send-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: var(--shadow-depth-2);
+        }
+
+        .send-button:disabled {
+            background: var(--neutral-400);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .send-button i {
+            margin-right: 8px;
+        }
+
+        /* Quick Action Chips */
+        .quick-chip {
+            display: inline-block;
+            padding: 8px 14px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-light));
+            color: var(--text-inverse);
+            border-radius: var(--border-radius-large);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            border: none;
+            box-shadow: var(--shadow-depth-2);
+        }
+
+        .quick-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-depth-8);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
+        }
+
+        .quick-chip:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-depth-2);
+        }
+
+        /* Suggestion chips container */
+        .suggestion-chips-container {
+            padding: 15px;
+            margin-bottom: 8px;
+            border-top: 1px solid #e1e1e1;
+            background: #fafafa;
+            display: none; /* Hidden by default */
+            opacity: 0;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .suggestion-chips-container.show {
+            display: block !important;
+            opacity: 1;
+        }
+
+        .suggestion-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .suggestion-chip {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-chip:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .suggestion-chip.primary {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            border-color: #0078d4;
+            font-weight: 600;
+            box-shadow: 0 3px 6px rgba(0, 120, 212, 0.3);
+        }
+
+        .suggestion-chip.primary:hover {
+            background: linear-gradient(135deg, #005a9e 0%, #004578 100%);
+            border-color: #005a9e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 120, 212, 0.4);
+        }
+
+        .suggestion-chip.edit {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-color: #ffeaa7;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .suggestion-chip.edit:hover {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-color: #fdcb6e;
+            transform: translateY(-1px);
+        }
+
+        .suggestion-chip.cancel {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .suggestion-chip.cancel:hover {
+            background: #f5c6cb;
+            border-color: #f1b0b7;
+        }
+
+        /* Progress bar styles */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 9999;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0078d4 0%, #00bcf2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.6) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-status {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            z-index: 10000;
+            display: none;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .progress-status .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hide edit and apply buttons, keep only copy */
+        .edit-btn, .deploy-btn {
+            display: none !important;
+        }
+
+        /* Interactive terraform blocks - DARK THEME COMPATIBLE */
+        .terraform-block {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .terraform-block:hover {
+            background-color: #161b22 !important; /* Slightly lighter dark background */
+            border-color: #58a6ff !important;
+        }
+
+        .typing-indicator {
+            display: none;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .typing-indicator .message-bubble {
+            background: white;
+            border: 1px solid #e1e1e1;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Special styling for deployment indicator */
+        #deploymentIndicator {
+            width: 100%;
+            margin: 10px 0;
+            padding: 0;
+            border: none;
+            position: relative;
+        }
+
+        #deploymentIndicator .message-bubble {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: none;
+            color: #ecf0f1;
+            font-style: normal;
+            font-weight: 500;
+            width: 100%;
+            margin: 0;
+            padding: 18px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        #deploymentIndicator .message-bubble #deploymentText {
+            color: #ecf0f1;
+        }
+
+        #deploymentIndicator .message-bubble #deploymentDots {
+            color: #3498db;
+            font-weight: bold;
+            font-size: 18px;
+            margin-left: 2px;
+        }
+
+        .progress-indicator {
+            display: none;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .progress-indicator .message-bubble {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 16px;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 4px 0;
+        }
+
+        .progress-step-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .progress-step.pending .progress-step-icon {
+            background: #6c757d;
+            color: white;
+        }
+
+        .progress-step.active .progress-step-icon {
+            background: #007bff;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .progress-step.completed .progress-step-icon {
+            background: #28a745;
+            color: white;
+        }
+
+        .progress-step.error .progress-step-icon {
+            background: #dc3545;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .progress-step-text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .progress-step.active .progress-step-text {
+            font-weight: 600;
+            color: #007bff;
+        }
+
+        .progress-step.completed .progress-step-text {
+            color: #28a745;
+        }
+
+        .progress-step.error .progress-step-text {
+            color: #dc3545;
+        }
+
+        .progress-details {
+            margin-left: 32px;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .examples {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .example-chip {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .example-chip:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .session-info {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* Adaptive Cards Styling */
+        .adaptive-card-container {
+            margin: 12px 0;
+            border-radius: var(--border-radius-large);
+            overflow: visible; /* Changed from hidden to allow dropdowns to expand */
+            box-shadow: var(--shadow-depth-4);
+            background: var(--surface-elevated);
+            position: relative; /* Ensure proper stacking context for dropdowns */
+            z-index: 10; /* Ensure dropdowns appear above other elements */
+        }
+
+        .adaptive-card-container .ac-container {
+            background: transparent !important;
+            border: none !important;
+            border-radius: inherit;
+        }
+
+        /* Custom styling for adaptive card elements */
+        .adaptive-card-container .ac-textBlock {
+            color: var(--text-primary) !important;
+            font-family: inherit !important;
+        }
+
+        .adaptive-card-container .ac-pushButton {
+            background: var(--primary-blue) !important;
+            border-color: var(--primary-blue) !important;
+            color: white !important;
+            border-radius: var(--border-radius-medium) !important;
+            transition: all var(--transition-fast) !important;
+        }
+
+        .adaptive-card-container .ac-pushButton:hover {
+            background: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .adaptive-card-container .ac-container {
+            padding: 16px !important;
+        }
+
+        /* Fix for adaptive card choice sets (dropdowns) */
+        .adaptive-card-container .ac-input-choiceSet {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+        
+        .adaptive-card-container .ac-input-choiceSet select {
+            max-height: 200px !important;
+            overflow-y: auto !important;
+            border: 2px solid var(--neutral-400) !important;
+            border-radius: var(--border-radius-medium) !important;
+            padding: 8px 12px !important;
+            font-family: inherit !important;
+            font-size: 14px !important;
+            background: var(--surface-elevated) !important;
+            color: var(--text-primary) !important;
+            transition: border-color var(--transition-fast) !important;
+        }
+        
+        .adaptive-card-container .ac-input-choiceSet select:focus {
+            border-color: var(--primary-blue) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2) !important;
+        }
+        
+        .adaptive-card-container .ac-input-choiceSet select option {
+            padding: 6px 12px !important;
+            color: var(--text-primary) !important;
+            background: var(--surface-elevated) !important;
+        }
+        
+        .adaptive-card-container .ac-input-choiceSet select option:hover {
+            background: var(--neutral-200) !important;
+        }
+
+        /* Fix for input fields in adaptive cards */
+        .adaptive-card-container .ac-input-text,
+        .adaptive-card-container .ac-input-number {
+            border: 2px solid var(--neutral-400) !important;
+            border-radius: var(--border-radius-medium) !important;
+            padding: 8px 12px !important;
+            font-family: inherit !important;
+            font-size: 14px !important;
+            transition: border-color var(--transition-fast) !important;
+        }
+        
+        .adaptive-card-container .ac-input-text:focus,
+        .adaptive-card-container .ac-input-number:focus {
+            border-color: var(--primary-blue) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress bar for deployment operations -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Progress status overlay -->
+    <div class="progress-status" id="progressStatus">
+        <div class="spinner"></div>
+        <span id="progressText">Deploying resources...</span>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="header-top">
+                    <div class="header-title">
+                        <div class="header-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <div>
+                            <h1>Azure AI Agent</h1>
+                            <div class="subtitle">Cloud Infrastructure Assistant</div>
+                        </div>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="deploymentCount">0</div>
+                            <div class="stat-label">DEPLOYMENTS</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="resourceCount">0</div>
+                            <div class="stat-label">RESOURCES</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="sessionTime">00:00</div>
+                            <div class="stat-label">SESSION</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="session-info">
+                    <i class="fas fa-user-circle"></i> Session ID: <span id="sessionId"></span>
+                    <span class="status-indicator" id="statusIndicator"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <div class="message-bubble">
+                    <h3 style="margin: 0 0 4px 0; color: var(--primary-blue); font-size: 16px;">
+                        <i class="fas fa-sparkles"></i> Azure AI Assistant
+                    </h3>
+                    
+                    Deploy and manage Azure infrastructure with natural language commands.
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 4px 0;">
+                        <span class="quick-chip" onclick="sendExample('List my resource groups')">📋 Resources</span>
+                        <span class="quick-chip" onclick="sendExample('Create an AKS cluster')">🚀 Deploy AKS</span>
+                        <span class="quick-chip" onclick="showTemplateGallery()">📦 Templates</span>
+                        <span class="quick-chip" onclick="sendExample('Check my Azure subscription')">🔍 Subscription</span>
+                    </div>
+                    
+                    What can I help you deploy today?
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message-bubble">AI Agent is thinking...</div>
+        </div>
+        
+        <div class="typing-indicator" id="deploymentIndicator" style="display: none;">
+            <div class="message-bubble">
+                <span id="deploymentText">Deploying</span><span id="deploymentDots" style="display: inline-block; width: 24px; text-align: left;">...</span>
+            </div>
+        </div>
+        
+        <div class="progress-indicator" id="progressIndicator">
+            <div class="message-bubble">
+                <div class="progress-step pending" id="step-analyzing">
+                    <div class="progress-step-icon">1</div>
+                    <div class="progress-step-text">Analyzing your request</div>
+                </div>
+                <div class="progress-step pending" id="step-planning">
+                    <div class="progress-step-icon">2</div>
+                    <div class="progress-step-text">Planning Azure resources</div>
+                </div>
+                <div class="progress-step pending" id="step-generating">
+                    <div class="progress-step-icon">3</div>
+                    <div class="progress-step-text">Generating Terraform template</div>
+                </div>
+                <div class="progress-step pending" id="step-reviewing">
+                    <div class="progress-step-icon">4</div>
+                    <div class="progress-step-text">Preparing for review</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Suggestion chips container -->
+        <div class="suggestion-chips-container" id="suggestionChips">
+            <div class="suggestion-chips" id="chipsList">
+                <!-- Chips will be populated dynamically -->
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <!-- Progress Bar -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <!-- Deployment Status with Terraform Output -->
+            <div class="deployment-status" id="deploymentStatus">
+                <div class="status-icon"></div>
+                <span id="deploymentStatusText">Ready</span>
+            </div>
+            
+            <!-- Simple Terraform Output Block -->
+            <div class="terraform-live-output" id="terraformLiveOutput" style="display: none;">
+                <div class="terraform-header">
+                    <i class="fas fa-terminal"></i>
+                    <span>Terraform Output</span>
+                    <span class="terraform-command" id="terraformCurrentCommand"></span>
+                </div>
+                <div class="terraform-console" id="terraformConsole">
+                    <pre id="terraformOutputPre"></pre>
+                </div>
+            </div>
+            
+            <form class="chat-input-form" id="chatForm">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Type your Azure command here..." 
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-button" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Include AdaptiveCards and template management -->
+    <script src="https://unpkg.com/adaptivecards@2.11.3/dist/adaptivecards.min.js"></script>
+    <script src="js/template-manager.js?v=3.0.4&fix=dom"></script>
+    
+    <!-- Azure AI Agent Modular JavaScript Architecture - Direct Mapping v5.0.0 -->
+    <script src="js/config.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/formatting.js?v=6.0.0&fix=dynamic-patterns"></script>
+    <script src="js/dashboard-new.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/chat.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/ui.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/cards.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/terraform.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/progress-simple.js?v=6.0.0&real-terraform-output"></script>
+    <script src="js/events.js?v=5.0.0&approach=direct-mapping"></script>
+    <script src="js/app-new.js?v=5.0.0&approach=direct-mapping"></script>
+</body>
+</html>

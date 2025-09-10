@@ -1,0 +1,15 @@
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\bin\Release\net8.0\AzureAIAgent.Plugins.deps.json
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\bin\Release\net8.0\AzureAIAgent.Plugins.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\bin\Release\net8.0\AzureAIAgent.Plugins.pdb
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.csproj.AssemblyReference.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.GeneratedMSBuildEditorConfig.editorconfig
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.AssemblyInfoInputs.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.AssemblyInfo.cs
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.csproj.CoreCompileInputs.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\refint\AzureAIAgent.Plugins.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIAgent.Plugins.pdb
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\ref\AzureAIAgent.Plugins.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\bin\Release\net8.0\AzureAIAgent.Core.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\bin\Release\net8.0\AzureAIAgent.Core.pdb
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Plugins\obj\Release\net8.0\AzureAIA.17A53486.Up2Date

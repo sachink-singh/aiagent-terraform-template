@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Semantic Resource Detection Test</title>
+    <style>
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #e8f5e8; }
+        .failure { background-color: #ffeaea; }
+        .resource-name { font-family: monospace; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🧠 Semantic Resource Detection Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Semantic detection implementation (copied from formatting.js)
+        const SemanticDetector = {
+            // Test pod names that should be detected
+            testPodNames: [
+                'azure-ip-masq-agent-nbnf4',
+                'cloud-node-manager-blkv2', 
+                'microsoft-defender-collector-misc-6c7847c69-w6zgp',
+                'azure-cns-mp2pg',
+                'coredns-6f776c8fb5-dhf76',
+                'kube-proxy-abcde',
+                'very-long-pod-name-with-many-hyphens-and-complex-structure-12345',
+                'simple-app-67890'
+            ],
+
+            // Check if token looks like a Kubernetes pod
+            looksLikeKubernetesPod(token) {
+                const lowerToken = token.toLowerCase();
+                
+                // Known Kubernetes prefixes (very comprehensive)
+                const k8sPrefixes = [
+                    'azure-', 'coredns-', 'kube-', 'csi-', 'cloud-', 'konnectivity-',
+                    'metrics-server-', 'microsoft-defender-', 'calico-', 'flannel-',
+                    'ingress-', 'nginx-', 'traefik-', 'istio-', 'linkerd-', 'envoy-',
+                    'prometheus-', 'grafana-', 'jaeger-', 'fluentd-', 'logstash-',
+                    'elasticsearch-', 'kibana-', 'redis-', 'mongodb-', 'postgres-',
+                    'mysql-', 'rabbitmq-', 'kafka-', 'zookeeper-', 'etcd-',
+                    'vault-', 'consul-', 'nomad-', 'cert-manager-', 'external-dns-',
+                    'cluster-autoscaler-', 'node-exporter-', 'kube-state-metrics-'
+                ];
+                
+                // Check for known prefixes
+                if (k8sPrefixes.some(prefix => lowerToken.startsWith(prefix))) {
+                    return true;
+                }
+                
+                // General pod-like characteristics
+                // Contains hyphens and alphanumeric, reasonable length
+                if (token.length >= 5 && token.length <= 100 && /^[a-z0-9\-]+$/i.test(token)) {
+                    // Has typical pod structure (multiple parts separated by hyphens)
+                    const parts = token.split('-');
+                    if (parts.length >= 2) {
+                        // Last part often looks like a hash or ID
+                        const lastPart = parts[parts.length - 1];
+                        if (/^[a-z0-9]{4,}$/i.test(lastPart)) {
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
+            },
+
+            // Check if a resource name is legitimate based on context
+            isLegitimateResource(resourceName, fullContent = "pod cluster kubernetes") {
+                // Additional validation based on context
+                
+                // Too short or too long
+                if (resourceName.length < 3 || resourceName.length > 100) return false;
+                
+                // Contains only valid characters
+                if (!/^[a-zA-Z0-9\-\.]+$/.test(resourceName)) return false;
+                
+                // Avoid common false positives
+                const falsePositives = [
+                    'running', 'ready', 'pending', 'failed', 'error', 'warning', 'info',
+                    'creating', 'deleting', 'updating', 'succeeded', 'completed',
+                    'started', 'stopped', 'restarting', 'terminating', 'unknown',
+                    'active', 'inactive', 'enabled', 'disabled', 'available',
+                    'cpu', 'memory', 'disk', 'network', 'storage', 'compute',
+                    'status', 'state', 'health', 'condition', 'phase', 'type',
+                    'name', 'namespace', 'cluster', 'node', 'container', 'image',
+                    'version', 'build', 'release', 'latest', 'stable', 'beta',
+                    'true', 'false', 'yes', 'no', 'on', 'off', 'up', 'down'
+                ];
+                
+                if (falsePositives.includes(resourceName.toLowerCase())) return false;
+                
+                // If it appears in a context that suggests it's a resource listing
+                const contextIndicators = [
+                    'pod', 'service', 'deployment', 'namespace', 'node',
+                    'cluster', 'resource group', 'storage account', 'aks',
+                    'container', 'registry', 'vault', 'database'
+                ];
+                
+                const hasResourceContext = contextIndicators.some(indicator => 
+                    fullContent.toLowerCase().includes(indicator)
+                );
+                
+                return hasResourceContext;
+            },
+
+            // Run tests
+            runTests() {
+                const results = [];
+                
+                this.testPodNames.forEach(podName => {
+                    const looksLikePod = this.looksLikeKubernetesPod(podName);
+                    const isLegitimate = this.isLegitimateResource(podName);
+                    const wouldBeDetected = looksLikePod && isLegitimate;
+                    
+                    results.push({
+                        podName,
+                        looksLikePod,
+                        isLegitimate,
+                        wouldBeDetected,
+                        analysis: {
+                            length: podName.length,
+                            hasHyphens: podName.includes('-'),
+                            parts: podName.split('-'),
+                            lastPart: podName.split('-').pop()
+                        }
+                    });
+                    
+                    console.log(`🧪 ${podName}:`);
+                    console.log(`  - Looks like pod: ${looksLikePod}`);
+                    console.log(`  - Is legitimate: ${isLegitimate}`);
+                    console.log(`  - Would be detected: ${wouldBeDetected}`);
+                });
+                
+                return results;
+            }
+        };
+
+        // Run the tests
+        const testResults = SemanticDetector.runTests();
+        
+        // Display results
+        const resultsDiv = document.getElementById('results');
+        testResults.forEach(result => {
+            const div = document.createElement('div');
+            div.className = `test-result ${result.wouldBeDetected ? 'success' : 'failure'}`;
+            
+            div.innerHTML = `
+                <h3>${result.wouldBeDetected ? '✅' : '❌'} <span class="resource-name">${result.podName}</span></h3>
+                <ul>
+                    <li>Looks like Kubernetes pod: ${result.looksLikePod ? '✅' : '❌'}</li>
+                    <li>Is legitimate resource: ${result.isLegitimate ? '✅' : '❌'}</li>
+                    <li>Length: ${result.analysis.length} characters</li>
+                    <li>Parts: ${result.analysis.parts.length} (${result.analysis.parts.join(', ')})</li>
+                    <li>Last part: "${result.analysis.lastPart}" (${result.analysis.lastPart.length} chars)</li>
+                </ul>
+            `;
+            
+            resultsDiv.appendChild(div);
+        });
+        
+        // Summary
+        const successful = testResults.filter(r => r.wouldBeDetected).length;
+        const total = testResults.length;
+        
+        const summaryDiv = document.createElement('div');
+        summaryDiv.style.marginTop = '20px';
+        summaryDiv.style.padding = '15px';
+        summaryDiv.style.border = '2px solid #333';
+        summaryDiv.style.backgroundColor = successful === total ? '#e8f5e8' : '#fff3cd';
+        summaryDiv.innerHTML = `
+            <h2>📊 Summary</h2>
+            <p><strong>${successful}/${total}</strong> pod names would be detected by semantic approach</p>
+            <p>Success rate: <strong>${Math.round((successful/total) * 100)}%</strong></p>
+        `;
+        
+        resultsDiv.insertBefore(summaryDiv, resultsDiv.firstChild);
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\bin\Debug\net8.0\AzureAIAgent.Core.deps.json
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\bin\Debug\net8.0\AzureAIAgent.Core.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\bin\Debug\net8.0\AzureAIAgent.Core.pdb
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.csproj.AssemblyReference.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.AssemblyInfoInputs.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.AssemblyInfo.cs
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.csproj.CoreCompileInputs.cache
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\refint\AzureAIAgent.Core.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.pdb
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\ref\AzureAIAgent.Core.dll
+C:\Temp\PoC\infraAgent.NET\AzureAIAgent.Core\obj\Debug\net8.0\AzureAIAgent.Core.sourcelink.json

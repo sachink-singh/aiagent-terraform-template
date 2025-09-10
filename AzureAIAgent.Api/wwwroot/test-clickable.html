@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickable Output Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-output { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .chat-input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 4px; }
+        button { background: #0078d4; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Clickable Output Test</h1>
+    
+    <div>
+        <label for="testInput">Test Chat Input:</label>
+        <input type="text" id="messageInput" class="chat-input" placeholder="Click on any item below to add it here...">
+    </div>
+    
+    <h2>Sample Agent Outputs (Click any line):</h2>
+    
+    <div class="test-output">
+        <h3>Kubernetes Pods:</h3>
+        <div id="output1"></div>
+    </div>
+    
+    <div class="test-output">
+        <h3>Azure Resources:</h3>
+        <div id="output2"></div>
+    </div>
+    
+    <div class="test-output">
+        <h3>Docker Containers:</h3>
+        <div id="output3"></div>
+    </div>
+    
+    <button onclick="clearInput()">Clear Input</button>
+    <button onclick="testAll()">Test All Patterns</button>
+    
+    <script>
+        // Copy the essential functions from the main application
+        function escapeForAttribute(text) {
+            return text.replace(/&/g, '&amp;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/\n/g, ' ')
+                      .replace(/\r/g, '')
+                      .replace(/\t/g, ' ');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function appendToChatById(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.error('Element not found:', elementId);
+                return;
+            }
+            
+            const text = element.getAttribute('data-text');
+            if (!text) {
+                console.error('No data-text found for element:', elementId);
+                return;
+            }
+            
+            const chatInput = document.getElementById('messageInput');
+            if (chatInput) {
+                const currentText = chatInput.value.trim();
+                const newText = currentText ? `${currentText} ${text}` : text;
+                chatInput.value = newText;
+                chatInput.focus();
+                chatInput.setSelectionRange(newText.length, newText.length);
+                
+                // Visual feedback
+                chatInput.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => {
+                    chatInput.style.backgroundColor = '';
+                }, 500);
+                
+                console.log('Added to chat:', text);
+            }
+        }
+
+        function makeClickableLine(text, isHeader = false) {
+            const uniqueId = 'clickable_' + Math.random().toString(36).substr(2, 9);
+            const clickClass = isHeader ? 'clickable-header' : 'clickable-line';
+            return `<span class="${clickClass}" id="${uniqueId}" data-text="${escapeForAttribute(text)}" onclick="appendToChatById('${uniqueId}')" style="cursor: pointer; background: #e8f4fd; padding: 2px 4px; margin: 1px 0; display: inline-block; border-left: 3px solid #0078d4;" title="Click to add to chat">${escapeHtml(text)}</span>`;
+        }
+
+        function clearInput() {
+            document.getElementById('messageInput').value = '';
+        }
+
+        function testAll() {
+            const samples = [
+                'nginx-deployment-1',
+                'redis-cache-2', 
+                'myWebApp',
+                'container-12345'
+            ];
+            
+            document.getElementById('messageInput').value = samples.join(' ');
+        }
+
+        // Load test data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kubernetes pods
+            const kubeOutput = `NAME                     READY   STATUS    RESTARTS   AGE
+nginx-deployment-1       1/1     Running   0          2d
+redis-cache-2           1/1     Running   1          1d
+web-frontend-3          0/1     Pending   0          5m
+api-backend-4           1/1     Failed    2          3h`;
+
+            const kubeLines = kubeOutput.split('\n');
+            let kubeHtml = '';
+            for (let i = 0; i < kubeLines.length; i++) {
+                const line = kubeLines[i].trim();
+                if (line) {
+                    const isHeader = i === 0;
+                    kubeHtml += makeClickableLine(line, isHeader) + '<br>';
+                }
+            }
+            document.getElementById('output1').innerHTML = kubeHtml;
+
+            // Azure resources
+            const azureOutput = `Name                Location    ResourceGroup    Status
+myWebApp           East US     rg-production    Running
+myDatabase         West US     rg-data         Succeeded
+myStorage          Central US  rg-storage      Creating`;
+
+            const azureLines = azureOutput.split('\n');
+            let azureHtml = '';
+            for (let i = 0; i < azureLines.length; i++) {
+                const line = azureLines[i].trim();
+                if (line) {
+                    const isHeader = i === 0;
+                    azureHtml += makeClickableLine(line, isHeader) + '<br>';
+                }
+            }
+            document.getElementById('output2').innerHTML = azureHtml;
+
+            // Docker containers
+            const dockerOutput = `CONTAINER ID   IMAGE                COMMAND                  STATUS
+12345abcde     nginx:latest         "/docker-entrypoint.…"   Up 2 hours
+67890fghij     redis:6.2-alpine     "docker-entrypoint.s…"   Up 1 day`;
+
+            const dockerLines = dockerOutput.split('\n');
+            let dockerHtml = '';
+            for (let i = 0; i < dockerLines.length; i++) {
+                const line = dockerLines[i].trim();
+                if (line) {
+                    const isHeader = i === 0;
+                    dockerHtml += makeClickableLine(line, isHeader) + '<br>';
+                }
+            }
+            document.getElementById('output3').innerHTML = dockerHtml;
+        });
+    </script>
+</body>
+</html>

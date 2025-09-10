@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Clickable Test</title>
+    <style>
+        .clickable-line {
+            background: lightblue;
+            padding: 5px;
+            margin: 2px 0;
+            cursor: pointer;
+            border: 1px solid blue;
+        }
+        .clickable-line:hover {
+            background: lightgreen;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Clickable Test</h1>
+    
+    <textarea id="messageInput" placeholder="Click on lines below to add them here..."></textarea>
+    
+    <div id="testContent">
+        <div>Pod listings (should be clickable):</div>
+        <div class="clickable-line" onclick="appendToChat('nginx-deployment-12345')">nginx-deployment-12345   1/1     Running   0          2d5h</div>
+        <div class="clickable-line" onclick="appendToChat('redis-cache-67890')">redis-cache-67890       1/1     Running   1          1d</div>
+        <div class="clickable-line" onclick="appendToChat('web-frontend-abc123')">web-frontend-abc123     0/1     Pending   0          5m</div>
+    </div>
+    
+    <script>
+        function appendToChat(text) {
+            console.log('appendToChat called with:', text);
+            const input = document.getElementById('messageInput');
+            if (input) {
+                const currentText = input.value.trim();
+                const newText = currentText ? currentText + ' ' + text : text;
+                input.value = newText;
+                input.focus();
+                
+                // Visual feedback
+                input.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => {
+                    input.style.backgroundColor = '';
+                }, 500);
+                
+                console.log('Text added successfully:', newText);
+            } else {
+                console.error('messageInput not found');
+            }
+        }
+        
+        // Test if function works
+        console.log('Test page loaded. appendToChat function:', typeof appendToChat);
+    </script>
+</body>
+</html>

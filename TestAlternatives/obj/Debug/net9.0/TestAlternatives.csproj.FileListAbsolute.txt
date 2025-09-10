@@ -1,0 +1,15 @@
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\bin\Debug\net9.0\TestAlternatives.exe
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\bin\Debug\net9.0\TestAlternatives.deps.json
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\bin\Debug\net9.0\TestAlternatives.runtimeconfig.json
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\bin\Debug\net9.0\TestAlternatives.dll
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\bin\Debug\net9.0\TestAlternatives.pdb
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.GeneratedMSBuildEditorConfig.editorconfig
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.AssemblyInfoInputs.cache
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.AssemblyInfo.cs
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.csproj.CoreCompileInputs.cache
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.sourcelink.json
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.dll
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\refint\TestAlternatives.dll
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.pdb
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\TestAlternatives.genruntimeconfig.cache
+C:\Temp\PoC\infraAgent.NET\TestAlternatives\obj\Debug\net9.0\ref\TestAlternatives.dll
