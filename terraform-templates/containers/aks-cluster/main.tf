@@ -194,13 +194,14 @@ resource "azurerm_kubernetes_cluster" "main" {
   kubernetes_version  = var.kubernetes_version
 
   default_node_pool {
-    name            = "default"
-    node_count      = var.enable_autoscaling ? null : var.node_count
-    min_count       = var.enable_autoscaling ? 1 : null
-    max_count       = var.enable_autoscaling ? 10 : null
-    vm_size         = var.vm_size
-    os_disk_size_gb = 30
-    vnet_subnet_id  = azurerm_subnet.aks.id
+    name                = "default"
+    node_count          = var.enable_autoscaling ? null : var.node_count
+    enable_auto_scaling = var.enable_autoscaling  # FIXED: Add enable_auto_scaling attribute
+    min_count           = var.enable_autoscaling ? 1 : null
+    max_count           = var.enable_autoscaling ? 10 : null
+    vm_size             = var.vm_size
+    os_disk_size_gb     = 30
+    vnet_subnet_id      = azurerm_subnet.aks.id
 
     upgrade_settings {
       max_surge = "10%"
